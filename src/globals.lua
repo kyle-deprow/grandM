@@ -29,3 +29,7 @@ C = {
   PERISHABLE = HEX('4f5da1'),
   RENTAL = HEX('b18f43')
 }
+
+TEXTURE_PATH = "./resources/textures/alpha/150/"
+PLAYER_CONFIG_PATH = "./json/player/"
+PIECE_OFFSET = 0.2

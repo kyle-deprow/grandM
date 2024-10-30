@@ -4,6 +4,26 @@ require("engine/sprite")
 -- Base Piece class
 Piece = Sprite:extend()
 
+function Piece:new(pieceConfig)
+  local instance = setmetatable({}, self)
+
+  instance.texture = love.graphics.newImage(
+    TEXTURE_PATH ..
+    pieceConfig.color ..
+    pieceConfig.type ..
+    ".png"
+  )
+
+  instance.type = pieceConfig.type
+  instance.rank = pieceConfig.rank
+  instance.health = pieceConfig.health
+  instance.defense = pieceConfig.defense
+  instance.items = pieceConfig.items or {}
+  instance.originalPosition = nil
+
+  return instance
+end
+
 function Piece:init(...)
   -- Call the parent class's init method
   Sprite.init(self, ...)
@@ -38,4 +58,24 @@ end
 function Piece:render(x, y)
   -- Draw the pawn texture at the given x, y position
   love.graphics.draw(self.texture, x, y)
+end
+
+function Piece:resetPosition()
+  self.position = self.originalPosition
+end 
+
+function Piece:setPosition(position)
+  self.position = position
+end
+
+function Piece:getOriginalPosition()
+  return self.originalPosition
+end
+
+function Piece:setOriginalPosition(position)
+  self.originalPosition = position
+end
+
+function Piece:getPosition()
+  return self.position
 end

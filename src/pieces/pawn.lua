@@ -2,15 +2,10 @@ require("globals")
 
 Pawn = Piece:extend()
 
-function Pawn:new(color, position)
-  local instance = Piece:new("Pawn", color, position)
+function Pawn:new(jsonConfig)
+  local instance = Piece:new(jsonConfig)
   setmetatable(instance, Pawn)
-  -- Load the texture based on the color
-  if color == C.WHITE then
-    instance.texture = love.graphics.newImage("./resources/textures/alpha/150/WhitePawn.png")
-  else
-    instance.texture = love.graphics.newImage("./resources/textures/alpha/150/BlackPawn.png")
-  end
+
   return instance
 end
 
