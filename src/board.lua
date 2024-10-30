@@ -49,7 +49,7 @@ function Board:initializePieces()
       topbottom_multiplier = -1
     end
 
-    for index, piece in ipairs(player.getPieces()) do
+    for index, piece in ipairs(player:getPieces()) do
       if not player.isInteractive then
         piece.position = {
           x = (index - 1) * self.tileSize + self.offsetX,
@@ -87,7 +87,7 @@ function Board:drawPieces()
   love.graphics.setColor(1, 1, 1) -- Reset color to white for pieces
   -- Draw the pieces
   for _, player in ipairs(self.players) do
-    for _, piece in ipairs(player.getPieces()) do
+    for _, piece in ipairs(player:getPieces()) do
       love.graphics.draw(piece.texture, piece.position.x, piece.position.y)
     end
   end
@@ -97,7 +97,7 @@ function Board:update(dt)
   -- Update logic for dragging and dropping pieces
   for _, player in ipairs(self.players) do
     if player.isInteractive then
-      for _, piece in ipairs(player.getPieces()) do
+      for _, piece in ipairs(player:getPieces()) do
         if piece.isDragging then
           piece.position.x, piece.position.y = love.mouse.getPosition()
         end
@@ -110,7 +110,7 @@ function Board:mousepressed(x, y, button)
   if button == 1 then -- Left mouse button
     for _, player in ipairs(self.players) do
       if player.isInteractive then
-        for _, piece in ipairs(player.getPieces()) do
+        for _, piece in ipairs(player:getPieces()) do
           if self.isMouseOverPiece(piece, x, y) then
             piece.isDragging = true
             break
@@ -125,7 +125,7 @@ function Board:mousereleased(x, y, button)
   if button == 1 then -- Left mouse button
     for _, player in ipairs(self.players) do
       if player.isInteractive then
-        for _, piece in ipairs(player.getPieces()) do
+        for _, piece in ipairs(player:getPieces()) do
           if piece.isDragging then
             piece.isDragging = false
             -- Check if the piece is dropped on a valid board position

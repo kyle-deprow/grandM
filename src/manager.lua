@@ -1,7 +1,7 @@
 require("globals")
 require("board")
 require("player")
-require("tools.util")
+require("tools/util")
 
 GameManager = {}
 GameManager.__index = GameManager

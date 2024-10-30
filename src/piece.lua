@@ -7,19 +7,17 @@ Piece = Sprite:extend()
 function Piece:new(pieceConfig)
   local instance = setmetatable({}, self)
 
-  instance.texture = love.graphics.newImage(
-    TEXTURE_PATH ..
-    pieceConfig.color ..
-    pieceConfig.type ..
-    ".png"
-  )
-
+  DebugPrint("PIECES", "Creating piece with config:", pieceConfig)
+  instance.color = pieceConfig.color
   instance.type = pieceConfig.type
   instance.rank = pieceConfig.rank
   instance.health = pieceConfig.health
   instance.defense = pieceConfig.defense
   instance.items = pieceConfig.items or {}
   instance.originalPosition = nil
+
+  DebugPrint("PIECES", "Creating piece with color:", instance.color, "and type:", instance.type)
+  instance.texture = love.graphics.newImage(ReturnPieceTextureFile(instance))
 
   return instance
 end

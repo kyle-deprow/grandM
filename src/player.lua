@@ -1,5 +1,5 @@
-require("tools.piece_factory")
-require("tools.util")
+require("tools/piece_factory")
+require("tools/util")
 
 Player = {}
 Player.__index = Player
@@ -13,6 +13,7 @@ function Player:new(jsonConfigPath)
   local config = ReturnJsonConfig(jsonConfigPath)
   instance.color = config.color
   instance.isInteractive = config.isInteractive
+  instance.pieces = {}
   for _, pieceConfig in ipairs(config.pieces) do
     pieceConfig.id = instance.pieceId
     pieceConfig.color = instance.color

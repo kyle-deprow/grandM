@@ -1,3 +1,7 @@
+require("engine/object")
+require("engine/node")
+require("engine/moveable")
+require("engine/sprite")
 require("manager")
 
 -- Load Love2D modules

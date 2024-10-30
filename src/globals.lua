@@ -30,6 +30,18 @@ C = {
   RENTAL = HEX('b18f43')
 }
 
-TEXTURE_PATH = "./resources/textures/alpha/150/"
-PLAYER_CONFIG_PATH = "./json/player/"
+TEXTURE_PATH = "resources/textures/150/"
+PLAYER_CONFIG_PATH = "json/players/"
 PIECE_OFFSET = 0.2
+
+-- Debug configurations
+DEBUG = {
+    ENABLED = true,  -- Master switch
+    SECTIONS = {
+        FILE_PATHS = true,
+        BOARD = false,
+        PIECES = true,
+        PLAYER = false,
+        GAME = false
+    }
+}

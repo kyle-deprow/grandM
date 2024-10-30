@@ -57,24 +57,30 @@ LuaChess is a configurable chess game built using Love2D. It features customizab
 - **Responsibilities**:
   - Represent individual chess pieces with attributes and behaviors.
   - Handle piece-specific actions like movement and drawing.
+  - Extends from Sprite class for rendering functionality.
 - **Key Methods**:
-  - `new(pieceConfig)`: Initializes a piece with attributes from a configuration.
-  - `init(...)`: Calls the parent class's init method and performs additional initialization for the piece.
+  - `new(pieceConfig)`: Creates a new piece instance with attributes from configuration (color, type, rank, health, defense, items).
+  - `init(...)`: Calls the parent Sprite class's init method.
   - `getValidMoves(board)`: Placeholder for getting valid moves; should be overridden by specific piece types.
   - `move(newPosition)`: Updates the piece's position.
-  - `draw()`: Renders the piece on the board.
+  - `draw()`: Renders the piece's texture on the board.
   - `render(x, y)`: Draws the piece's texture at a specified position.
   - `resetPosition()`: Resets the piece's position to its original position.
+  - `setPosition(position)`: Sets the piece's current position.
+  - `getPosition()`: Returns the piece's current position.
   - `getOriginalPosition()`: Returns the piece's original position.
   - `setOriginalPosition(position)`: Sets the piece's original position.
 
 ### **Utility Functions (`src/tools/util.lua`)**
 - **Responsibilities**:
-  - Provide utility functions for color conversion and configuration file handling.
+  - Provide utility functions for debugging, color conversion, and file handling.
 - **Key Functions**:
+  - `DebugPrint(section, ...)`: Prints debug messages for specified sections when debugging is enabled.
   - `HEX(hex)`: Converts a hexadecimal color string to a table of normalized RGBA values.
+  - `DebugPrintFilesInPath(path)`: Debug utility to list files in a directory.
+  - `ReturnPieceTextureFile(piece)`: Constructs the file path for a piece's texture file.
   - `ReturnPlayerConfigFile(configName)`: Constructs the file path for a player's configuration JSON file.
-  - `ReturnJsonConfig(jsonConfigPath)`: Reads and decodes a JSON configuration file, returning its contents.
+  - `ReturnJsonConfig(jsonConfigPath)`: Reads and decodes a JSON configuration file, with error handling.
 
 ### **Piece Factory (`src/tools/piece_factory.lua`)**
 - **Responsibilities**:
@@ -92,11 +98,13 @@ LuaChess is a configurable chess game built using Love2D. It features customizab
   - `PIECE_OFFSET`: Offset value for initial piece positions.
 
 ## Future Development
+- Continue debugging until board and pawns are working.
 - Implement logic for validating moves in `Board:isValidMove()`.
 - Enhance piece-specific behaviors by overriding `Piece:getValidMoves()`.
 - Develop AI for computer player moves.
 - Expand configuration options for more diverse gameplay.
 
 ## Notes
+- Tab space sizing is set to 2 spaces.
 - Ensure all JSON configuration files are correctly formatted and accessible.
 - Consider adding sound effects and animations for a more engaging experience.

@@ -1,4 +1,5 @@
 require("globals")
+require("piece")
 
 Pawn = Piece:extend()
 
