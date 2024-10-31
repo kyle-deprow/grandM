@@ -38,9 +38,9 @@ PIECE_OFFSET = 0.2
 DEBUG = {
     ENABLED = true,  -- Master switch
     SECTIONS = {
-        FILE_PATHS = true,
-        BOARD = false,
-        PIECES = true,
+        FILE_PATHS = false,
+        BOARD = true,
+        PIECES = false,
         PLAYER = false,
         GAME = false
     }

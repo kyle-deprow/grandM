@@ -1,5 +1,6 @@
 -- piece.lua
 require("engine/sprite")
+require("tools/position")
 
 -- Base Piece class
 Piece = Sprite:extend()
@@ -14,7 +15,10 @@ function Piece:new(pieceConfig)
   instance.health = pieceConfig.health
   instance.defense = pieceConfig.defense
   instance.items = pieceConfig.items or {}
-  instance.originalPosition = nil
+  instance.start = pieceConfig.start or {offsetX = 0, offsetY = 0}
+  instance.position = Position.new(0, 0)
+  instance.originalPosition = Position.new(0, 0)
+  instance.tile = nil
 
   DebugPrint("PIECES", "Creating piece with color:", instance.color, "and type:", instance.type)
   instance.texture = love.graphics.newImage(ReturnPieceTextureFile(instance))
@@ -32,11 +36,6 @@ function Piece:getValidMoves(board)
   -- Placeholder for getting valid moves
   -- This method should be overridden by specific piece types
   return {}
-end
-
-function Piece:move(newPosition)
-  -- Update the piece's position
-  self.position = newPosition
 end
 
 function Piece:draw()
@@ -59,21 +58,46 @@ function Piece:render(x, y)
 end
 
 function Piece:resetPosition()
-  self.position = self.originalPosition
+  self.position:set(self.originalPosition:getX(), self.originalPosition:getY())
 end 
 
 function Piece:setPosition(position)
   self.position = position
 end
 
+function Piece:setOriginalPosition(position)
+  self.originalPosition = position
+end
+
+function Piece:setTile(tile)
+  self.tile = tile
+end
+
 function Piece:getOriginalPosition()
   return self.originalPosition
 end
 
-function Piece:setOriginalPosition(position)
-  self.originalPosition = position
+function Piece:getType()
+  return self.type
+end
+
+function Piece:getColor()
+  return self.color
 end
 
 function Piece:getPosition()
   return self.position
 end
+
+function Piece:getTexture()
+  return self.texture
+end
+
+function Piece:getStart()
+  return self.start
+end
+
+function Piece:getTile()
+  return self.tile
+end
+

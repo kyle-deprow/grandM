@@ -1,8 +1,12 @@
 require("globals")
+require("tile")
 
 -- Board class
 Board = {}
 Board.__index = Board
+
+local TOP = 1
+local BOTTOM = -1
 
 function Board:new()
   local instance = setmetatable({}, Board)
@@ -12,27 +16,31 @@ function Board:new()
   instance.offsetX = 0
   instance.offsetY = 0
   instance.tileSize = 0
+  instance.rows = -1
+  instance.cols = -1
   return instance
 end
 
 function Board:initializeBoard(rows, cols, player1, player2)
   -- Set up initial board state
+  self.rows = rows
+  self.cols = cols
   self.grid = {}
-  local colors = {player1.color, player2.color}
+  local colors = {C[string.upper(player1.color)], C[string.upper(player2.color)]}
 
   for i = 1, rows do
     self.grid[i] = {}
     for j = 1, cols do
       -- Alternate colors based on the sum of the indices
       local colorIndex = (i + j) % 2 + 1
-      self.grid[i][j] = colors[colorIndex]
+      self.grid[i][j] = Tile.new(colors[colorIndex])
     end
   end
 
   self.players = {player1, player2}
 
-  self:initializePieces()
   self:draw()
+  self:initializePieces()
 end
 
 function Board:draw()
@@ -43,22 +51,44 @@ end
 function Board:initializePieces()
   -- Position all non-interactive players' pieces below the board
   for i, player in ipairs(self.players) do
-    -- Player 1 pieces are below the board, Player 2 pieces are above the board
-    local topbottom_multiplier = 1
-    if i == 2 then
-      topbottom_multiplier = -1
-    end
+    DebugPrint("BOARD", "Setting piece initial positions for player", i, player:getColor())
 
+    -- Player 1 pieces are below the board, Player 2 pieces are above the board
+    local topbottom_multiplier = TOP
+    if i == 2 then
+      topbottom_multiplier = BOTTOM
+    end
     for index, piece in ipairs(player:getPieces()) do
       if not player.isInteractive then
-        piece.position = {
-          x = (index - 1) * self.tileSize + self.offsetX,
-          y = self.offsetY + rows * self.tileSize + self.tileSize * PIECE_OFFSET * topbottom_multiplier
-        }
-        piece.setOriginalPosition(piece.position)
+        self:initializeInteractivePiece(piece, index, topbottom_multiplier)
+      elseif not player.isInteractive and piece.position:isDefault() then
+        self:initializeNonInteractivePiece(piece)
       end
     end
   end
+end
+
+function Board:initializeInteractivePiece(piece, index, topbottom)
+  local position = {
+    x = (index - 1) * self.tileSize + self.offsetX,
+    y = self.offsetY + self.rows * self.tileSize + self.tileSize * PIECE_OFFSET * topbottom
+  }
+  DebugPrint("BOARD", "Setting piece initial position", position.x, position.y)
+  piece:getPosition():set(position.x, position.y)
+  piece:getOriginalPosition():set(position.x, position.y)
+end
+
+function Board:initializeNonInteractivePiece(piece, topbottom)
+  local numRows = #self.grid
+  local numCols = #self.grid[1]
+  -- Piece starts indicates how far from the center column and top/bottom of the board the piece is
+  local pieceStart = piece:getStart()
+  local pieceColIndex = (math.floor(numCols/2)) + pieceStart.offsetX
+  local pieceRowIndex = (topbottom == TOP) and pieceStart.offsetY or (numRows - pieceStart.offsetY)
+  local tile = self.grid[pieceRowIndex][pieceColIndex]
+  piece:getPosition():copy(tile:calculatePiecePosition())
+  piece:getOriginalPosition():copy(piece:getPosition())
+  tile:setPiece(piece)
 end
 
 function Board:drawBoard()
@@ -75,10 +105,13 @@ function Board:drawBoard()
   self.offsetY = (windowHeight - totalBoardHeight) / 2
 
   for i, row in ipairs(self.grid) do
-    for j, color in ipairs(row) do
+    for j, tile in ipairs(row) do
       -- Draw the rectangle for the current tile
-      love.graphics.setColor(color)
-      love.graphics.rectangle("fill", self.offsetX + (j - 1) * self.tileSize, self.offsetY + (i - 1) * self.tileSize, self.tileSize, self.tileSize)
+      love.graphics.setColor(tile:getColor())
+      local tileTopLeftCorner = {x = self.offsetX + (j - 1) * self.tileSize, y = self.offsetY + (i - 1) * self.tileSize}
+      tile:setTopLeftCorner(tileTopLeftCorner)
+      tile:setTileSize(self.tileSize)
+      love.graphics.rectangle("fill", tileTopLeftCorner.x, tileTopLeftCorner.y, self.tileSize, self.tileSize)
     end
   end
 end
@@ -88,7 +121,8 @@ function Board:drawPieces()
   -- Draw the pieces
   for _, player in ipairs(self.players) do
     for _, piece in ipairs(player:getPieces()) do
-      love.graphics.draw(piece.texture, piece.position.x, piece.position.y)
+      local position = piece:getPosition()
+      love.graphics.draw(piece:getTexture(), position.x, position.y)
     end
   end
 end 
@@ -99,7 +133,8 @@ function Board:update(dt)
     if player.isInteractive then
       for _, piece in ipairs(player:getPieces()) do
         if piece.isDragging then
-          piece.position.x, piece.position.y = love.mouse.getPosition()
+          local mousePosition = love.mouse.getPosition()
+          piece:getPosition():set(mousePosition.x, mousePosition.y)
         end
       end
     end
@@ -130,11 +165,14 @@ function Board:mousereleased(x, y, button)
             piece.isDragging = false
             -- Check if the piece is dropped on a valid board position
             local boardX, boardY = self:getBoardPosition(x, y)
-            if self:isValidMove(piece, boardX, boardY) then
-              piece.setPosition({x = boardX, y = boardY})
-            else
-              -- Reset to original position if not valid
-              piece.resetPosition()
+            if boardX > 0 and boardX <= #self.grid and boardY > 0 and boardY <= #self.grid[1] then
+              local tile = self.grid[boardY][boardX]
+              if self:isValidMove(piece, tile) then
+                self:movePiece(piece, tile)
+              else
+                -- Reset to original position if not valid
+                piece:resetPosition()
+              end
             end
             break
           end
@@ -146,8 +184,9 @@ end
 
 function Board:isMouseOverPiece(piece, x, y)
   -- Check if the mouse is over the piece
-  local pieceX, pieceY = piece.position.x, piece.position.y
-  return x >= pieceX and x <= pieceX + piece.width and y >= pieceY and y <= pieceY + piece.height
+  local piecePosition = piece:getPosition()
+  local pieceX, pieceY = piecePosition.x, piecePosition.y
+  return x >= pieceX and x <= pieceX + piece:getWidth() and y >= pieceY and y <= pieceY + piece:getHeight()
 end
 
 function Board:getBoardPosition(x, y)
@@ -160,4 +199,14 @@ end
 function Board:isValidMove(piece, x, y)
   -- Implement logic to check if the move is valid
   return true -- Placeholder, implement actual logic
+end
+
+function Board:movePiece(piece, destTile)
+  piece:getPosition():set(destTile:calculatePiecePosition())
+  -- Remove piece from current tile
+  if piece:getTile() then
+    piece:getTile():setPiece(nil)
+  end
+  -- Set piece to new tile
+  destTile:setPiece(piece)
 end

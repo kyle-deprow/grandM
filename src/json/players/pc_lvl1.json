@@ -7,21 +7,33 @@
       "rank": 1,
       "health": 1,
       "defense": 0,
-      "items": []
+      "items": [],
+      "start": {
+        "offsetX": 1,
+        "offsetY": 1
+      }
     },
     {
       "type": "pawn",
       "rank": 1,
       "health": 1,
       "defense": 0,
-      "items": []
+      "items": [],
+      "start": {
+        "offsetX": -1,
+        "offsetY": 1
+      }
     },
     {
       "type": "pawn",
       "rank": 1,
       "health": 1,
       "defense": 0,
-      "items": []
+      "items": [],
+      "start": {
+        "offsetX": 2,
+        "offsetY": 1
+      }
     }
   ]
 }
