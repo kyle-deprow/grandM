@@ -26,6 +26,9 @@ LuaChess is a configurable chess game built using Love2D. It features customizab
   - `drawPieces()`: Draws the pieces on the board.
   - `update(dt)`: Updates the board state, handling piece dragging for interactive players.
   - `mousepressed(x, y, button)`: Initiates piece dragging when the left mouse button is pressed.
+  - `initializeInteractivePiece(piece, index, topbottom)`: Sets up initial position for interactive pieces.
+  - `initializeNonInteractivePiece(piece, topbottom)`: Sets up initial position for non-interactive pieces.
+  - `movePiece(piece, destTile)`: Handles piece movement between tiles.
   - `mousereleased(x, y, button)`: Finalizes piece placement, checking for valid moves.
   - `isMouseOverPiece(piece, x, y)`: Checks if the mouse is over a specific piece.
   - `getBoardPosition(x, y)`: Converts screen coordinates to board coordinates.
@@ -70,6 +73,40 @@ LuaChess is a configurable chess game built using Love2D. It features customizab
   - `getPosition()`: Returns the piece's current position.
   - `getOriginalPosition()`: Returns the piece's original position.
   - `setOriginalPosition(position)`: Sets the piece's original position.
+  - `getType()`: Returns the piece type.
+  - `getColor()`: Returns the piece color.
+  - `getTexture()`: Returns the piece texture.
+  - `getStart()`: Returns the piece starting position offsets.
+  - `getTile()`: Returns the current tile the piece is on.
+
+### **Tile (`src/tile.lua`)**
+- **Responsibilities**:
+  - Represent a single tile on the chess board
+  - Track tile color and current piece
+  - Calculate piece positioning within the tile
+  - Manage tile dimensions and position
+- **Key Methods**:
+  - `new(color)`: Creates a new tile with specified color
+  - `calculatePiecePosition()`: Determines the correct position for a piece within the tile
+  - `getColor()`, `setColor(color)`: Color management
+  - `getPiece()`, `setPiece(piece)`: Piece management
+  - `hasPiece()`: Check if tile contains a piece
+  - `getTopLeftCorner()`, `setTopLeftCorner(corner)`: Manage tile position
+  - `getTileSize()`, `setTileSize(size)`: Manage tile dimensions
+
+### **Position (`src/tools/position.lua`)**
+- **Responsibilities**:
+  - Utility class for managing x,y coordinates
+  - Provide position comparison and copying functionality
+- **Key Methods**:
+  - `new(x, y)`: Creates a new position
+  - `copy(pos)`: Copies values from another position
+  - `getX()`, `getY()`: Coordinate getters
+  - `setX(x)`, `setY(y)`: Individual coordinate setters
+  - `set(x, y)`: Set both coordinates at once
+  - `isUninitialized()`, `isDefault()`: Check if position is at (0,0)
+  - `__eq`: Equality comparison metamethod
+  - `__tostring`: String representation for debugging
 
 ### **Utility Functions (`src/tools/util.lua`)**
 - **Responsibilities**:
@@ -101,10 +138,6 @@ LuaChess is a configurable chess game built using Love2D. It features customizab
 - Continue debugging until board and pawns are working.
 - Implement logic for validating moves in `Board:isValidMove()`.
 - Enhance piece-specific behaviors by overriding `Piece:getValidMoves()`.
-- Develop AI for computer player moves.
-- Expand configuration options for more diverse gameplay.
 
 ## Notes
 - Tab space sizing is set to 2 spaces.
-- Ensure all JSON configuration files are correctly formatted and accessible.
-- Consider adding sound effects and animations for a more engaging experience.
