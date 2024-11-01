@@ -6,7 +6,7 @@ GrandM is a configurable chess game built using Love2D. It features customizable
 ## Game Workflow
 1. **Game Boot**: Initialize the game environment and load necessary resources.
 2. **Board Presentation**: Display a new chess board.
-3. **Player Piece Placement**: Player pieces are shown below the board and can be moved onto valid board positions.
+3. **Player Piece Placement**: Player pieces are shown in tile holders below/above the board and can be moved onto valid board positions.
 4. **Computer Piece Placement**: Computer pieces are pre-placed based on JSON configuration files.
 5. **Game Commencement**: Once pieces are placed on the board, the game proceeds with standard chess rules.
 
@@ -17,82 +17,97 @@ GrandM is a configurable chess game built using Love2D. It features customizable
   - Initialize and draw the chess board.
   - Manage piece placement and movement.
   - Handle board-related interactions (e.g., mouse events).
+  - Manage tile holders for unplaced pieces.
 - **Key Methods**:
   - `new()`: Creates a new board instance with default attributes.
-  - `initializeBoard(rows, cols, player1, player2)`: Sets up the board with alternating colors and initializes pieces for both players.
-  - `draw()`: Renders the board and pieces.
-  - `initializePieces()`: Positions non-interactive players' pieces below or above the board.
-  - `drawBoard()`: Draws the board tiles with alternating colors.
-  - `drawPieces()`: Draws the pieces on the board.
-  - `update(dt)`: Updates the board state, handling piece dragging for interactive players.
-  - `mousepressed(x, y, button)`: Initiates piece dragging when the left mouse button is pressed.
-  - `initializeInteractivePiece(piece, index, topbottom)`: Sets up initial position for interactive pieces.
-  - `initializeNonInteractivePiece(piece, topbottom)`: Sets up initial position for non-interactive pieces.
-  - `movePiece(piece, destTile)`: Handles piece movement between tiles.
-  - `mousereleased(x, y, button)`: Finalizes piece placement, checking for valid moves.
-  - `isMouseOverPiece(piece, x, y)`: Checks if the mouse is over a specific piece.
-  - `getBoardPosition(x, y)`: Converts screen coordinates to board coordinates.
-  - `isValidMove(piece, x, y)`: Placeholder for move validation logic.
+  - `initialize(rows, cols, player1, player2)`: Sets up the board, tile holders, and initializes pieces.
+  - `calculateBoardParameters()`: Calculates board dimensions and scaling.
+  - `initializeBoard()`: Sets up the board with alternating colors.
+  - `initializeTileHolders()`: Creates tile holders for each player.
+  - `initializePieces()`: Sets up pieces in tile holders or on board.
+  - `initializeTileHolderPiece(piece, position)`: Places piece in tile holder.
+  - `initializeBoardPiece(piece, position)`: Places piece on board.
+  - `draw()`: Renders the board, pieces, and tile holders.
+  - `checkIfWindowSizeChanged()`: Monitors for window resizing.
+  - `resetBoard()`, `resetTileHolders()`: Updates positions after window resize.
+  - `drawBoard()`, `drawTileHolders()`: Renders board components.
+  - `update(dt)`: Updates game state and piece positions.
+  - `mousepressed(x, y, button)`, `mousereleased(x, y, button)`: Handles mouse input.
+
+### **TileHolder (`src/tileholder.lua`)**
+- **Responsibilities**:
+  - Manage a row of tiles for holding unplaced pieces.
+  - Handle piece placement and removal.
+  - Position tiles relative to the board.
+- **Key Methods**:
+  - `new(maxPieces, position, boardWidth, tileSize)`: Creates new tile holder.
+  - `initializeTiles()`: Sets up initial tile positions.
+  - `reset(position, tileSize, boardWidth)`: Updates holder after window resize.
+  - `resetTiles()`: Recalculates tile positions.
+  - `addPiece(piece)`: Places piece in first available tile.
+  - `removePiece(piece)`: Removes piece from holder.
+  - `getPieceAtPosition(x, y)`: Returns piece at screen coordinates.
+  - `draw()`: Renders holder and contained pieces.
+  - `getPieces()`: Returns all pieces in holder.
 
 ### **GameManager (`src/manager.lua`)**
 - **Responsibilities**:
   - Manage game state and player turns.
   - Initialize and start the game.
 - **Key Methods**:
-  - `new()`: Creates a new game manager instance, initializing players and the board.
-  - `startGame()`: Initializes players and board, setting the game state to "playing".
-  - `update(dt)`: Updates game logic during the "playing" state.
-  - `draw()`: Delegates drawing to the board.
-  - `keypressed(key)`: Handles key inputs, such as switching turns.
-  - `switchTurn()`: Switches the active player, allowing for turn-based gameplay.
+  - `new()`: Creates game manager with players and board.
+  - `startGame()`: Initializes game components.
+  - `update(dt)`: Updates game logic.
+  - `draw()`: Delegates rendering.
+  - `keypressed(key)`: Handles keyboard input.
+  - `switchTurn()`: Manages turn rotation.
 
 ### **Player (`src/player.lua`)**
 - **Responsibilities**:
   - Manage player-specific data and pieces.
   - Load player configuration from JSON files.
 - **Key Methods**:
-  - `new(jsonConfigPath)`: Initializes a player with pieces from a JSON configuration.
-  - `setPieces(pieces)`: Sets the player's pieces.
-  - `getColor()`: Returns the player's color.
-  - `getPieces()`: Returns the player's pieces.
+  - `new(jsonConfigPath)`: Initializes player from config.
+  - `setPieces(pieces)`: Updates player pieces.
+  - `getColor()`: Returns player color.
+  - `getPieces()`: Returns player pieces.
+  - `getPiecesCount()`: Returns number of pieces.
+  - `getMaxPieces()`: Returns maximum allowed pieces.
+  - `getIsInteractive()`: Returns if player is interactive.
 
 ### **Piece (`src/piece.lua`)**
 - **Responsibilities**:
-  - Represent individual chess pieces with attributes and behaviors.
-  - Handle piece-specific actions like movement and drawing.
-  - Extends from Sprite class for rendering functionality.
+  - Represent individual chess pieces.
+  - Handle piece-specific actions.
+  - Manage piece scaling and positioning.
 - **Key Methods**:
-  - `new(pieceConfig)`: Creates a new piece instance with attributes from configuration (color, type, rank, health, defense, items).
-  - `init(...)`: Calls the parent Sprite class's init method.
-  - `getValidMoves(board)`: Placeholder for getting valid moves; should be overridden by specific piece types.
-  - `move(newPosition)`: Updates the piece's position.
-  - `draw()`: Renders the piece's texture on the board.
-  - `render(x, y)`: Draws the piece's texture at a specified position.
-  - `resetPosition()`: Resets the piece's position to its original position.
-  - `setPosition(position)`: Sets the piece's current position.
-  - `getPosition()`: Returns the piece's current position.
-  - `getOriginalPosition()`: Returns the piece's original position.
-  - `setOriginalPosition(position)`: Sets the piece's original position.
-  - `getType()`: Returns the piece type.
-  - `getColor()`: Returns the piece color.
-  - `getTexture()`: Returns the piece texture.
-  - `getStart()`: Returns the piece starting position offsets.
-  - `getTile()`: Returns the current tile the piece is on.
+  - `new(pieceConfig)`: Creates piece from config.
+  - `draw()`: Renders piece with scaling.
+  - `calculateScale(tileSize)`: Updates piece scale.
+  - `resetPosition()`: Returns to original position.
+  - `setPosition(position)`, `getPosition()`: Position management.
+  - `setTile(tile)`, `getTile()`: Tile management.
+  - `getId()`: Returns piece identifier.
+  - `getOriginalPosition()`, `setOriginalPosition()`: Original position management.
+  - `getPngSize()`, `getScale()`: Scaling information.
+  - `getTexture()`: Returns piece texture.
+  - `getStart()`: Returns starting position offsets.
 
 ### **Tile (`src/tile.lua`)**
 - **Responsibilities**:
-  - Represent a single tile on the chess board
-  - Track tile color and current piece
-  - Calculate piece positioning within the tile
-  - Manage tile dimensions and position
+  - Represent a single tile on board or in holder.
+  - Track tile color and current piece.
+  - Calculate piece positioning.
 - **Key Methods**:
-  - `new(color)`: Creates a new tile with specified color
-  - `calculatePiecePosition()`: Determines the correct position for a piece within the tile
-  - `getColor()`, `setColor(color)`: Color management
-  - `getPiece()`, `setPiece(piece)`: Piece management
-  - `hasPiece()`: Check if tile contains a piece
-  - `getTopLeftCorner()`, `setTopLeftCorner(corner)`: Manage tile position
-  - `getTileSize()`, `setTileSize(size)`: Manage tile dimensions
+  - `new(color)`: Creates new tile.
+  - `draw()`: Renders tile and piece.
+  - `reset(tileSize, topLeftCornerX, topLeftCornerY)`: Updates tile parameters.
+  - `calculatePiecePosition()`: Determines piece placement.
+  - `getColor()`, `setColor(color)`: Color management.
+  - `getPiece()`, `setPiece(piece)`: Piece management.
+  - `hasPiece()`: Checks for piece presence.
+  - `getTopLeftCorner()`, `setTopLeftCorner(corner)`: Position management.
+  - `getTileSize()`, `setTileSize(size)`: Size management.
 
 ### **Position (`src/tools/position.lua`)**
 - **Responsibilities**:
@@ -127,17 +142,22 @@ GrandM is a configurable chess game built using Love2D. It features customizable
 
 ### **Global Constants (`src/globals.lua`)**
 - **Responsibilities**:
-  - Define global constants and paths used throughout the game.
+  - Define global constants and paths.
 - **Key Constants**:
-  - `C`: Table of color constants.
-  - `TEXTURE_PATH`: Path to texture resources.
-  - `PLAYER_CONFIG_PATH`: Path to player configuration files.
-  - `PIECE_OFFSET`: Offset value for initial piece positions.
+  - `C`: Color constants including new GRAY color.
+  - `TEXTURE_PATH`: Texture resource path.
+  - `PLAYER_CONFIG_PATH`: Player config path.
+  - `PIECE_OFFSET`: Piece positioning offset.
+  - `BOARD_SCALING_FACTOR`: Board size scaling (0.80).
+  - `TOP`, `BOTTOM`: Position constants (1, -1).
+  - `DEBUG`: Extended debug sections including TILE and TILEHOLDER.
 
 ## Future Development
-- Continue debugging until board and pawns are working.
-- Implement logic for validating moves in `Board:isValidMove()`.
-- Enhance piece-specific behaviors by overriding `Piece:getValidMoves()`.
+- Implement correct tileholder placement (currently off to the side)
+- Implement drag and drop logic from tileholder to board
+- Implement move validation logic.
+- Enhance piece-specific behaviors.
 
 ## Notes
 - Tab space sizing is set to 2 spaces.
+- Window resizing is now handled automatically.
