@@ -61,16 +61,21 @@ function Piece:calculateScale(tileSize)
   DebugPrint("PIECE", "Calculating scale for piece", self:getId(), "tileSize", tileSize, "preScaler", self.preScaler, "scale", self.scale)
 end 
 
-function Piece:resetPosition()
-  self.position:set(self.originalPosition:getX(), self.originalPosition:getY())
+function Piece:reset(position)
+  self.position:copy(position)
+  self.originalPosition:copy(position)
+end
+
+function Piece:resetToOriginalPosition()
+  self.position:copy(self.originalPosition)
 end 
 
 function Piece:setPosition(position)
-  self.position = position
+  self.position:copy(position)
 end
 
 function Piece:setOriginalPosition(position)
-  self.originalPosition = position
+  self.originalPosition:copy(position)
 end
 
 function Piece:setTile(tile)

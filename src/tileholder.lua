@@ -10,56 +10,52 @@ TileHolder.__index = TileHolder
 -- @param position: TOP or BOTTOM position relative to board
 -- @param boardWidth: width of the game board (for centering)
 -- @param tileSize: size of each tile
-function TileHolder.new(maxPieces, position, boardWidth, tileSize)
+function TileHolder.new(maxPieces, topbottom, boardOffsetX, boardOffsetY, boardWidth, boardTileSize)
   local instance = setmetatable({}, TileHolder)
   instance.maxPieces = maxPieces
-  instance.position = position
+  instance.topbottom = topbottom
   instance.tiles = {}
-  instance.tileSize = tileSize
-  instance.boardWidth = boardWidth
+  instance:setBoardParameters(boardOffsetX, boardOffsetY, boardWidth, boardTileSize)
   instance:initializeTiles()
   return instance
 end
 
+function TileHolder:setBoardParameters(boardOffsetX, boardOffsetY, boardWidth, boardTileSize)
+  self.holderWidth = self.maxPieces * boardTileSize
+  -- Center the holder on the board and then push left corner over half the holder width
+  self.holderOffsetX = (boardOffsetX + boardWidth / 2) - self.holderWidth / 2
+
+  -- Center holder above or below the board depending on the position and account for the tile size
+  -- If above account for the tile size when drawing the top corner
+  self.holderOffsetY = (self.topbottom == TOP) and boardOffsetY - (TILE_HOLDER_OFFSET_Y_FACTOR * boardTileSize) - boardTileSize or
+    (boardOffsetY + boardWidth) + TILE_HOLDER_OFFSET_Y_FACTOR * boardTileSize
+
+  self.boardWidth = boardWidth
+  self.tileSize = boardTileSize
+end
+
+function TileHolder:reset(boardOffsetX, boardOffsetY, boardWidth, boardTileSize)
+  self:setBoardParameters(boardOffsetX, boardOffsetY, boardWidth, boardTileSize)
+  self:resetTiles()
+end
+
 function TileHolder:initializeTiles()
-  -- Calculate starting X position to center the holder
-  local holderWidth = self.maxPieces * self.tileSize
-  local startX = (self.boardWidth - holderWidth) / 2
-
-  -- Calculate Y position based on position (TOP/BOTTOM)
-  local startY = (self.position == TOP) and -self.tileSize * 1.5 or (self.boardWidth + self.tileSize * 0.5)
-
   -- Create tiles
   for i = 1, self.maxPieces do
     local tile = Tile.new(C.PURPLE)
     tile:setTileSize(self.tileSize)
     tile:setTopLeftCorner(Position.new(
-      startX + (i-1) * self.tileSize,
-      startY
+      self.holderOffsetX + (i-1) * self.tileSize,
+      self.holderOffsetY
     ))
     table.insert(self.tiles, tile)
   end
 end
 
-function TileHolder:reset(position, tileSize, boardWidth)
-  self.position = position
-  self.tiles = {}
-  self.tileSize = tileSize
-  self.boardWidth = boardWidth
-  self:resetTiles()
-end
-
 function TileHolder:resetTiles()
-  -- Calculate starting X position to center the holder
-  local holderWidth = self.maxPieces * self.tileSize
-  local startX = (self.boardWidth - holderWidth) / 2
-
-  -- Calculate Y position based on position (TOP/BOTTOM)
-  local startY = (self.position == TOP) and -self.tileSize * 1.5 or (self.boardWidth + self.tileSize * 0.5)
-
   -- Reset tiles positions
   for i, tile in ipairs(self.tiles) do
-    tile:reset(self.tileSize, startX + (i-1) * self.tileSize, startY)
+    tile:reset(self.tileSize, self.holderOffsetX + (i-1) * self.tileSize, self.holderOffsetY)
   end
 end
 

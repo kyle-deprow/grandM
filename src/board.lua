@@ -74,7 +74,8 @@ end
 -- They are initialized in the correct position with empty transparent Tiles and will be loaded during Piece initialization
 function Board:initializeTileHolders()
   for position, player in pairs(self.players) do
-    self.tileHolders[position] = TileHolder.new(player:getMaxPieces(), position, self.totalBoardWidth, self.tileSize)
+    self.tileHolders[position] = TileHolder.new(player:getMaxPieces(),
+      position, self.offsetX, self.offsetY, self.totalBoardHeight, self.tileSize)
   end
 end
 
@@ -116,6 +117,7 @@ end
 
 function Board:draw()
   if self:checkIfWindowSizeChanged() then
+    self:calculateBoardParameters()
     self:resetBoard()
     self:resetTileHolders()
   end
@@ -126,8 +128,6 @@ end
 function Board:checkIfWindowSizeChanged()
   local windowWidth, windowHeight = love.graphics.getDimensions()
   if windowWidth ~= self.windowWidth or windowHeight ~= self.windowHeight then
-    self.windowWidth = windowWidth
-    self.windowHeight = windowHeight
     return true
   end
   return false
@@ -143,8 +143,8 @@ function Board:resetBoard()
 end
 
 function Board:resetTileHolders()
-  for position, tileHolder in pairs(self.tileHolders) do
-    tileHolder:reset(position, self.tileSize, self.totalBoardWidth)
+  for _, tileHolder in pairs(self.tileHolders) do
+    tileHolder:reset(self.offsetX, self.offsetY, self.totalBoardWidth, self.tileSize)
   end
 end
 

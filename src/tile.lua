@@ -27,8 +27,12 @@ function Tile:draw()
 end
 
 function Tile:reset(tileSize, topLeftCornerX, topLeftCornerY)
-  self:setTileSize(tileSize)
-  self:getTopLeftCorner():set(topLeftCornerX, topLeftCornerY)
+  self.tileSize = tileSize
+  self.leftTopCorner:set(topLeftCornerX, topLeftCornerY)
+  if self:hasPiece() then
+    self.piece:reset(self:calculatePiecePosition())
+    self.piece:calculateScale(self.tileSize)
+  end
 end
 
 function Tile:calculatePiecePosition()
