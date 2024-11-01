@@ -9,7 +9,7 @@
       "defense": 0,
       "items": [],
       "start": {
-        "offsetX": 1,
+        "offsetX": 0,
         "offsetY": 1
       }
     },
@@ -31,7 +31,7 @@
       "defense": 0,
       "items": [],
       "start": {
-        "offsetX": 2,
+        "offsetX": 1,
         "offsetY": 1
       }
     }

@@ -1,7 +1,7 @@
 # GrandM Game Design Document
 
 ## Overview
-LuaChess is a configurable chess game built using Love2D. It features customizable game pieces and rogue-like gameplay elements. The game allows players to configure their pieces and positions through JSON files, providing a unique and dynamic chess experience.
+GrandM is a configurable chess game built using Love2D. It features customizable game pieces and rogue-like gameplay elements. The game allows players to configure their pieces and positions through JSON files, providing a unique and dynamic chess experience.
 
 ## Game Workflow
 1. **Game Boot**: Initialize the game environment and load necessary resources.

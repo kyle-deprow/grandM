@@ -1,5 +1,7 @@
 require("tools.util")
 
+local TILE_CORRECTION = 0.025
+
 -- Tile class to represent a single tile on the board
 Tile = {}
 Tile.__index = Tile
@@ -16,10 +18,22 @@ function Tile.new(color)
   return instance
 end
 
+function Tile:draw()
+  love.graphics.setColor(self.color)
+  love.graphics.rectangle("fill", self.leftTopCorner.x, self.leftTopCorner.y, self.tileSize, self.tileSize)
+  if self:hasPiece() then
+    self.piece:draw()
+  end
+end
+
+function Tile:reset(tileSize, topLeftCornerX, topLeftCornerY)
+  self:setTileSize(tileSize)
+  self:getTopLeftCorner():set(topLeftCornerX, topLeftCornerY)
+end
 
 function Tile:calculatePiecePosition()
-  local x = self.leftTopCorner.x + self.tileSize * 0.5
-  local y = self.leftTopCorner.y + self.tileSize * 0.2
+  local x = self.leftTopCorner.x + self.tileSize * TILE_CORRECTION
+  local y = self.leftTopCorner.y + self.tileSize * TILE_CORRECTION
   return Position.new(x, y)
 end
 

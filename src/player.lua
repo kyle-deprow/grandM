@@ -8,16 +8,17 @@ function Player:new(jsonConfigPath)
   local instance = setmetatable({}, Player)
 
   -- Initialize piece ID counter which will increment for each piece
-  instance.pieceId = 0
+  instance.pieceId = 1
 
   local config = ReturnJsonConfig(jsonConfigPath)
-  instance.color = config.color
+  instance.color = string.upper(config.color)
   instance.isInteractive = config.isInteractive
   instance.pieces = {}
-  for _, pieceConfig in ipairs(config.pieces) do
+  instance.maxPiecesToPlay = config.maxPiecesToPlay or 0
+  for i, pieceConfig in pairs(config.pieces) do
     pieceConfig.id = instance.pieceId
     pieceConfig.color = instance.color
-    instance.pieces[pieceConfig.id] = CreatePieceFromConfig(pieceConfig)
+    instance.pieces[instance.pieceId] = CreatePieceFromConfig(pieceConfig)
     instance.pieceId = instance.pieceId + 1
   end
 
@@ -34,4 +35,16 @@ end
 
 function Player:getPieces()
   return self.pieces
+end
+
+function Player:getPiecesCount()
+  return #self.pieces
+end
+
+function Player:getMaxPieces()
+  return self.maxPiecesToPlay
+end
+
+function Player:getIsInteractive()
+  return self.isInteractive
 end

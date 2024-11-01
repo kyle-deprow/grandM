@@ -1,6 +1,7 @@
 {
   "color": "white",
   "isInteractive": true,
+  "maxPiecesToPlay": 5,
   "pieces": [
     {
       "type": "pawn",

@@ -3,10 +3,12 @@ require("engine/node")
 require("engine/moveable")
 require("engine/sprite")
 require("manager")
+require("globals")
 
 -- Load Love2D modules
 function love.load()
   -- Initialize game manager
+  love.graphics.setBackgroundColor(C.GRAY)
   manager = GameManager:new()
   manager:startGame()
 end

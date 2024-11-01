@@ -1,131 +1,167 @@
 require("globals")
+require("tileholder")
 require("tile")
 
 -- Board class
 Board = {}
 Board.__index = Board
 
-local TOP = 1
-local BOTTOM = -1
-
 function Board:new()
   local instance = setmetatable({}, Board)
   -- Initialize board attributes
-  instance.grid = {}
+  instance.gridTiles = {}
+  instance.tileHolders = {BOTTOM = {}, TOP = {}}
+  instance.players = {BOTTOM = nil, TOP = nil}
   instance.pieces = {}
   instance.offsetX = 0
   instance.offsetY = 0
   instance.tileSize = 0
   instance.rows = -1
   instance.cols = -1
+  instance.windowWidth = 0
+  instance.windowHeight = 0
+  instance.totalBoardWidth = 0
+  instance.totalBoardHeight = 0
   return instance
 end
 
-function Board:initializeBoard(rows, cols, player1, player2)
+function Board:initialize(rows, cols, player1, player2)
   -- Set up initial board state
   self.rows = rows
   self.cols = cols
-  self.grid = {}
-  local colors = {C[string.upper(player1.color)], C[string.upper(player2.color)]}
+  self.gridTiles = {}
+  self.players = {BOTTOM = player1, TOP = player2}
+  DebugPrint("BOARD", "Initializing board", self.players.BOTTOM:getColor(), self.players.TOP:getColor())
+  self.tileHolders = {BOTTOM = {}, TOP = {}}
 
-  for i = 1, rows do
-    self.grid[i] = {}
-    for j = 1, cols do
-      -- Alternate colors based on the sum of the indices
-      local colorIndex = (i + j) % 2 + 1
-      self.grid[i][j] = Tile.new(colors[colorIndex])
-    end
-  end
-
-  self.players = {player1, player2}
-
-  self:draw()
+  self:initializeBoard()
+  self:initializeTileHolders()
   self:initializePieces()
 end
 
-function Board:draw()
-  self:drawBoard()
-  self:drawPieces()
+function Board:calculateBoardParameters()
+  self.windowWidth, self.windowHeight = love.graphics.getDimensions()
+  self.tileSize = math.min(self.windowWidth / self.cols, self.windowHeight / self.rows)*BOARD_SCALING_FACTOR
+
+  -- Calculate offsets to center the board
+  self.totalBoardWidth = self.cols * self.tileSize
+  self.totalBoardHeight = self.rows * self.tileSize
+  self.offsetX = (self.windowWidth - self.totalBoardWidth) / 2
+  self.offsetY = (self.windowHeight - self.totalBoardHeight) / 2
 end
 
+-- Initialize the board with tiles, calculate tile sizes, and offsets
+-- This is done before pieces are initialized so that the board can be centered
+-- and the tile holders can be initialized in the correct position
+function Board:initializeBoard()
+  local colors = {C[self.players.BOTTOM:getColor()], C[self.players.TOP:getColor()]}
+
+  self:calculateBoardParameters()
+  for i = 1, self.rows do
+    self.gridTiles[i] = {}
+    for j = 1, self.cols do
+      -- Alternate colors based on the sum of the indices
+      local colorIndex = (i + j) % 2 + 1
+      self.gridTiles[i][j] = Tile.new(colors[colorIndex])
+      -- Set the top left corner position of the tile using offsets and indices
+      self.gridTiles[i][j]:reset(self.tileSize, self.offsetX + (j - 1) * self.tileSize, self.offsetY + (i - 1) * self.tileSize)
+    end
+  end
+end
+
+-- Initialize the tile holders for each player
+-- Tile holders are the constructs that hold the pieces that are held off the board by the players
+-- They are initialized in the correct position with empty transparent Tiles and will be loaded during Piece initialization
+function Board:initializeTileHolders()
+  for position, player in pairs(self.players) do
+    self.tileHolders[position] = TileHolder.new(player:getMaxPieces(), position, self.totalBoardWidth, self.tileSize)
+  end
+end
+
+-- Initialize the pieces on the board
+-- There are two types of initialization routines for pieces: tile holders and board
+-- Tile holder pieces are pieces held off the board to be moved onto the board by the player
+-- Board pieces are pieces that already start on a board tile and cannot be moved until the game starts
 function Board:initializePieces()
   -- Position all non-interactive players' pieces below the board
-  for i, player in ipairs(self.players) do
-    DebugPrint("BOARD", "Setting piece initial positions for player", i, player:getColor())
-
-    -- Player 1 pieces are below the board, Player 2 pieces are above the board
-    local topbottom_multiplier = TOP
-    if i == 2 then
-      topbottom_multiplier = BOTTOM
-    end
-    for index, piece in ipairs(player:getPieces()) do
-      if not player.isInteractive then
-        self:initializeInteractivePiece(piece, index, topbottom_multiplier)
-      elseif not player.isInteractive and piece.position:isDefault() then
-        self:initializeNonInteractivePiece(piece)
+  for position, player in pairs(self.players) do
+    DebugPrint("BOARD", "Initializing pieces for player", position, player:getColor(), "length", #player:getPieces())
+    for _, piece in ipairs(player:getPieces()) do
+      piece:calculateScale(self.tileSize)
+      DebugPrint("BOARD", "Initializing piece", piece:getId(), "position", piece.position, "scale", piece.scale, "tileSize", self.tileSize)
+      if player:getIsInteractive() then
+        self:initializeTileHolderPiece(piece, position)
+      elseif not player:getIsInteractive() and piece.position:isDefault() then
+        self:initializeBoardPiece(piece, position)
       end
     end
   end
 end
 
-function Board:initializeInteractivePiece(piece, index, topbottom)
-  local position = {
-    x = (index - 1) * self.tileSize + self.offsetX,
-    y = self.offsetY + self.rows * self.tileSize + self.tileSize * PIECE_OFFSET * topbottom
-  }
-  DebugPrint("BOARD", "Setting piece initial position", position.x, position.y)
-  piece:getPosition():set(position.x, position.y)
-  piece:getOriginalPosition():set(position.x, position.y)
+function Board:initializeTileHolderPiece(piece, position)
+  self.tileHolders[position]:addPiece(piece)
 end
 
-function Board:initializeNonInteractivePiece(piece, topbottom)
-  local numRows = #self.grid
-  local numCols = #self.grid[1]
+function Board:initializeBoardPiece(piece, position)
   -- Piece starts indicates how far from the center column and top/bottom of the board the piece is
+  DebugPrint("BOARD", "Initializing board piece", piece:getId(), "for player", position)
   local pieceStart = piece:getStart()
-  local pieceColIndex = (math.floor(numCols/2)) + pieceStart.offsetX
-  local pieceRowIndex = (topbottom == TOP) and pieceStart.offsetY or (numRows - pieceStart.offsetY)
-  local tile = self.grid[pieceRowIndex][pieceColIndex]
+  local pieceColIndex = (math.floor(self.cols/2)) + pieceStart.offsetX
+  local pieceRowIndex = (position == "TOP") and pieceStart.offsetY or (self.rows - pieceStart.offsetY)
+  local tile = self.gridTiles[pieceRowIndex + 1][pieceColIndex + 1]
   piece:getPosition():copy(tile:calculatePiecePosition())
   piece:getOriginalPosition():copy(piece:getPosition())
   tile:setPiece(piece)
 end
 
-function Board:drawBoard()
+function Board:draw()
+  if self:checkIfWindowSizeChanged() then
+    self:resetBoard()
+    self:resetTileHolders()
+  end
+  self:drawBoard()
+  self:drawTileHolders()
+end
+
+function Board:checkIfWindowSizeChanged()
   local windowWidth, windowHeight = love.graphics.getDimensions()
-  local numRows = #self.grid
-  local numCols = #self.grid[1]
-  local scalingFactor = 0.80
-  self.tileSize = math.min(windowWidth / numCols, windowHeight / numRows)*scalingFactor
+  if windowWidth ~= self.windowWidth or windowHeight ~= self.windowHeight then
+    self.windowWidth = windowWidth
+    self.windowHeight = windowHeight
+    return true
+  end
+  return false
+end
 
-  -- Calculate offsets to center the board
-  local totalBoardWidth = numCols * self.tileSize
-  local totalBoardHeight = numRows * self.tileSize
-  self.offsetX = (windowWidth - totalBoardWidth) / 2
-  self.offsetY = (windowHeight - totalBoardHeight) / 2
-
-  for i, row in ipairs(self.grid) do
+function Board:resetBoard()
+  self:calculateBoardParameters()
+  for i, row in ipairs(self.gridTiles) do
     for j, tile in ipairs(row) do
-      -- Draw the rectangle for the current tile
-      love.graphics.setColor(tile:getColor())
-      local tileTopLeftCorner = {x = self.offsetX + (j - 1) * self.tileSize, y = self.offsetY + (i - 1) * self.tileSize}
-      tile:setTopLeftCorner(tileTopLeftCorner)
-      tile:setTileSize(self.tileSize)
-      love.graphics.rectangle("fill", tileTopLeftCorner.x, tileTopLeftCorner.y, self.tileSize, self.tileSize)
+      tile:reset(self.tileSize, self.offsetX + (j - 1) * self.tileSize, self.offsetY + (i - 1) * self.tileSize)
     end
   end
 end
 
-function Board:drawPieces()
-  love.graphics.setColor(1, 1, 1) -- Reset color to white for pieces
-  -- Draw the pieces
-  for _, player in ipairs(self.players) do
-    for _, piece in ipairs(player:getPieces()) do
-      local position = piece:getPosition()
-      love.graphics.draw(piece:getTexture(), position.x, position.y)
+function Board:resetTileHolders()
+  for position, tileHolder in pairs(self.tileHolders) do
+    tileHolder:reset(position, self.tileSize, self.totalBoardWidth)
+  end
+end
+
+function Board:drawBoard()
+  for _, row in ipairs(self.gridTiles) do
+    for _, tile in ipairs(row) do
+      -- Draw the rectangle for the current tile
+      tile:draw()
     end
   end
-end 
+end
+
+function Board:drawTileHolders()
+  for position, tileHolder in pairs(self.tileHolders) do
+    tileHolder:draw()
+  end
+end
 
 function Board:update(dt)
   -- Update logic for dragging and dropping pieces

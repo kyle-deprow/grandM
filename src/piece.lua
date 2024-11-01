@@ -16,12 +16,15 @@ function Piece:new(pieceConfig)
   instance.defense = pieceConfig.defense
   instance.items = pieceConfig.items or {}
   instance.start = pieceConfig.start or {offsetX = 0, offsetY = 0}
+  instance.id = pieceConfig.id
   instance.position = Position.new(0, 0)
   instance.originalPosition = Position.new(0, 0)
   instance.tile = nil
 
-  DebugPrint("PIECES", "Creating piece with color:", instance.color, "and type:", instance.type)
   instance.texture = love.graphics.newImage(ReturnPieceTextureFile(instance))
+	instance.pngSize = 150 -- TODO: Hardcoded for now
+  instance.preScaler = 1/(instance.pngSize/(0.96)) --scale *0.96
+  instance.scale = 0
 
   return instance
 end
@@ -46,16 +49,17 @@ function Piece:draw()
   -- self.shader:send("hueColor", {hueColor[1], hueColor[2], hueColor[3]})
 
   -- Draw the piece's texture at its position
-  love.graphics.draw(self.texture, self.position.x, self.position.y)
+  love.graphics.setColor(1, 1, 1)
+  love.graphics.draw(self.texture, self.position.x, self.position.y, 0, self.scale, self.scale)
 
   -- Reset the shader
   -- love.graphics.setShader()
 end
 
-function Piece:render(x, y)
-  -- Draw the pawn texture at the given x, y position
-  love.graphics.draw(self.texture, x, y)
-end
+function Piece:calculateScale(tileSize)
+  self.scale = self.preScaler * tileSize
+  DebugPrint("PIECE", "Calculating scale for piece", self:getId(), "tileSize", tileSize, "preScaler", self.preScaler, "scale", self.scale)
+end 
 
 function Piece:resetPosition()
   self.position:set(self.originalPosition:getX(), self.originalPosition:getY())
@@ -73,6 +77,10 @@ function Piece:setTile(tile)
   self.tile = tile
 end
 
+function Piece:getId()
+  return self.id
+end
+
 function Piece:getOriginalPosition()
   return self.originalPosition
 end
@@ -87,6 +95,14 @@ end
 
 function Piece:getPosition()
   return self.position
+end
+
+function Piece:getPngSize()
+  return self.pngSize
+end
+
+function Piece:getScale()
+  return self.scale
 end
 
 function Piece:getTexture()

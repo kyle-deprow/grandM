@@ -16,17 +16,17 @@ function GameManager:new()
   instance.gameState = "init"
   instance.board = Board:new()
   instance.players = {
-    Player:new(ReturnPlayerConfigFile("player_white")),
-    Player:new(ReturnPlayerConfigFile("pc_lvl1"))
+    BOTTOM = Player:new(ReturnPlayerConfigFile("player_white")),
+    TOP = Player:new(ReturnPlayerConfigFile("pc_lvl1"))
   }
 
   return instance
 end
 
 function GameManager:startGame()
-  self.currentPlayer = self.players[1]
-  self.inactivePlayer = self.players[2]
-  self.board:initializeBoard(8, 8, self.currentPlayer, self.inactivePlayer)
+  self.currentPlayer = self.players.BOTTOM
+  self.inactivePlayer = self.players.TOP
+  self.board:initialize(8, 8, self.currentPlayer, self.inactivePlayer)
   self.gameState = "playing"
 end
 
