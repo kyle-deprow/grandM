@@ -70,4 +70,12 @@ function Position:subtract(pos)
   self.y = self.y - pos.y
 end
 
+Position.__add = function(a, b)
+  return Position.new(a.x + b.x, a.y + b.y)
+end
+
+Position.__sub = function(a, b)
+  return Position.new(a.x - b.x, a.y - b.y)
+end
+
 return Position

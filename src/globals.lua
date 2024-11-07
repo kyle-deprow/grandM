@@ -33,6 +33,7 @@ C = {
 TEXTURE_PATH = "resources/textures/150/"
 PLAYER_CONFIG_PATH = "json/players/"
 
+INVALID_TILE_ALPHA = 0.3
 LEFT_CLICK = 1
 BOARD_SCALING_FACTOR = 0.70
 TILE_HOLDER_OFFSET_Y_FACTOR = 0.2
@@ -40,7 +41,7 @@ TOP = 1
 BOTTOM = -1
 
 DRAG_DAMPING = 0.50
-DRAG_ACCELERATION = 100
+DRAG_ACCELERATION = 300
 
 -- Debug configurations
 DEBUG = {
@@ -51,7 +52,7 @@ DEBUG = {
         PIECE = true,
         MANAGER = true,
         PLAYER = false,
-        TILE = false,
+        TILE = true,
         TILEHOLDER = false,
         GAME = false
     }

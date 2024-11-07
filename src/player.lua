@@ -4,7 +4,7 @@ require("tools/util")
 Player = {}
 Player.__index = Player
 
-function Player:new(jsonConfigPath)
+function Player:new(jsonConfigPath, topbottom)
   local instance = setmetatable({}, Player)
 
   -- Initialize piece ID counter which will increment for each piece
@@ -13,11 +13,15 @@ function Player:new(jsonConfigPath)
   local config = ReturnJsonConfig(jsonConfigPath)
   instance.color = string.upper(config.color)
   instance.isInteractive = config.isInteractive
+  instance.topBottom = topbottom
   instance.pieces = {}
   instance.maxPiecesToPlay = config.maxPiecesToPlay or 0
   for i, pieceConfig in pairs(config.pieces) do
+    -- Set extra piece config parameters specific to the player
     pieceConfig.id = instance.pieceId
     pieceConfig.color = instance.color
+    pieceConfig.playerTopBottom = topbottom
+
     instance.pieces[instance.pieceId] = CreatePieceFromConfig(pieceConfig)
     instance.pieceId = instance.pieceId + 1
   end

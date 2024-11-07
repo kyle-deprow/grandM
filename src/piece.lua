@@ -2,6 +2,7 @@
 require("engine/sprite")
 require("tools/position")
 require("tools/velocity")
+require("tools/tile_translation")
 
 -- Base Piece class
 Piece = Sprite:extend()
@@ -9,7 +10,6 @@ Piece = Sprite:extend()
 function Piece:new(pieceConfig)
   local instance = setmetatable({}, self)
 
-  DebugPrint("PIECES", "Creating piece with config:", pieceConfig)
   instance.color = pieceConfig.color
   instance.type = pieceConfig.type
   instance.rank = pieceConfig.rank
@@ -18,6 +18,7 @@ function Piece:new(pieceConfig)
   instance.items = pieceConfig.items or {}
   instance.start = pieceConfig.start or {offsetX = 0, offsetY = 0}
   instance.id = pieceConfig.id
+  instance.playerTopBottom = pieceConfig.playerTopBottom
   instance.position = Position.new(0, 0)
   instance.originalPosition = Position.new(0, 0)
   instance.tile = nil
@@ -41,12 +42,6 @@ function Piece:init(...)
   -- Additional initialization for Piece
 end
 
-function Piece:getValidMoves(board)
-  -- Placeholder for getting valid moves
-  -- This method should be overridden by specific piece types
-  return {}
-end
-
 function Piece:draw()
   -- Set the shader
   -- love.graphics.setShader(self.shader)
@@ -60,6 +55,11 @@ function Piece:draw()
 
   -- Reset the shader
   -- love.graphics.setShader()
+end
+
+-- Piece is initialized if it is attached to a tile
+function Piece:initialized()
+  return self.tile ~= nil
 end
 
 function Piece:updateDragging(target, dt)
@@ -81,6 +81,31 @@ function Piece:calculateScale(tileSize)
   self.width = self.scale * self.pngSize
   self.height = self.scale * self.pngSize
 end 
+
+function Piece:validateMove(translation)
+  -- Rotate translation if piece is on top so all calculations are the same for both players
+  if self:getPlayerTopBottom() == TOP then
+    translation:rotate()
+  end
+
+  if translation:getDestinationTile():hasPiece() then
+    return self:validateOccupiedMove(translation)
+  else
+    return self:validateUnoccupiedMove(translation)
+  end
+end
+
+function Piece:validateOccupiedMove(translation)
+  -- Abstract method to be implemented by subclasses
+end
+
+function Piece:validateUnoccupiedMove(translation)
+  -- Abstract method to be implemented by subclasses
+end
+
+function Piece:validatePlacement(translation)
+  -- Abstract method to be implemented by subclasses
+end
 
 function Piece:reset(position)
   self.position:copy(position)
@@ -105,6 +130,7 @@ end
 
 function Piece:setDragging(dragging)
   self.dragging = dragging
+  self.dragVelocity:zero()
 end
 
 function Piece:getId()
@@ -147,6 +173,14 @@ function Piece:getTile()
   return self.tile
 end
 
+function Piece:getTileRow()
+  return self.tile:getRow()
+end
+
+function Piece:getTileCol()
+  return self.tile:getCol()
+end
+
 function Piece:getWidth()
   return self.width
 end
@@ -161,5 +195,9 @@ end
 
 function Piece:getDragVelocity()
   return self.dragVelocity
+end
+
+function Piece:getPlayerTopBottom()
+  return self.playerTopBottom
 end
 

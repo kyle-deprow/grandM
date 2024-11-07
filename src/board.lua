@@ -61,7 +61,7 @@ function Board:initializeBoard()
     for j = 1, self.cols do
       -- Alternate colors based on the sum of the indices
       local colorIndex = (i + j) % 2 + 1
-      self.gridTiles[i][j] = Tile.new(colors[colorIndex])
+      self.gridTiles[i][j] = Tile.new(colors[colorIndex], i, j)
       -- Set the top left corner position of the tile using offsets and indices
       self.gridTiles[i][j]:reset(self.tileSize, self.offsetX + (j - 1) * self.tileSize, self.offsetY + (i - 1) * self.tileSize)
     end
@@ -138,6 +138,7 @@ function Board:resetBoard()
   for i, row in ipairs(self.gridTiles) do
     for j, tile in ipairs(row) do
       tile:reset(self.tileSize, self.offsetX + (j - 1) * self.tileSize, self.offsetY + (i - 1) * self.tileSize)
+      tile:setIsInvalid(false)
     end
   end
 end
@@ -185,14 +186,8 @@ end
 
 function Board:update(dt)
   -- Update logic for dragging and dropping pieces
-  for position, player in pairs(self.players) do
-    if player:getIsInteractive() then
-      for _, piece in ipairs(player:getPieces()) do
-        if piece:getDragging() then
-          piece:updateDragging(Position.new(love.mouse.getPosition()), dt)
-        end
-      end
-    end
+  if self.draggingPiece then
+    self.draggingPiece:updateDragging(Position.new(love.mouse.getPosition()), dt)
   end
 end
 
@@ -203,6 +198,8 @@ function Board:mousepressed(x, y, button)
         for _, piece in ipairs(player:getPieces()) do
           if self:isMouseOverPiece(piece, x, y) then
             piece:setDragging(true)
+            self.draggingPiece = piece
+            self:updateTileValidShading()
             break
           end
         end
@@ -213,25 +210,24 @@ end
 
 function Board:mousereleased(x, y, button)
   if button == LEFT_CLICK then
-    for position, player in pairs(self.players) do
-      if player:getIsInteractive() then
-        for _, piece in ipairs(player:getPieces()) do
-          if piece:getDragging() then
-            -- Check if the piece is dropped on a valid board position
-            local boardX, boardY = self:getBoardPosition(x, y)
-            if boardX > 0 and boardX <= #self.gridTiles and boardY > 0 and boardY <= #self.gridTiles[1] then
-              local tile = self.gridTiles[boardY][boardX]
-              if self:isValidMove(piece, tile) then
-                self:movePiece(piece, tile)
-              else
-                -- Reset to original position if not valid
-                piece:resetPosition()
-              end
-            end
-            break
-          end
+    if self.draggingPiece then
+      self.draggingPiece:setDragging(false)
+      -- Check if the piece is dropped on a valid board position
+      local boardX, boardY = self:getBoardPosition(x, y)
+      if self:isMouseOverBoard(boardX, boardY) then
+        local tile = self.gridTiles[boardY][boardX]
+        if self:isValidMove(self.draggingPiece, tile) then
+          self:movePiece(self.draggingPiece, tile)
+        else
+          -- Reset to original position if not valid move tile
+          self.draggingPiece:resetToOriginalPosition()
         end
+      else
+        -- Reset to original position if placed off the board
+        self.draggingPiece:resetToOriginalPosition()
       end
+      self.draggingPiece = nil
+      self:clearTileShading()
     end
   end
 end
@@ -239,6 +235,10 @@ end
 function Board:mousemoved(x, y)
   -- Update the mouse position
   --self.mouseX, self.mouseY = x, y
+end
+
+function Board:isMouseOverBoard(boardX, boardY)
+  return boardX > 0 and boardX <= self.cols and boardY > 0 and boardY <= self.rows
 end
 
 function Board:isMouseOverPiece(piece, x, y)
@@ -255,17 +255,57 @@ function Board:getBoardPosition(x, y)
   return boardX, boardY
 end
 
-function Board:isValidMove(piece, x, y)
-  -- Implement logic to check if the move is valid
-  return true -- Placeholder, implement actual logic
+function Board:isValidMove(piece, destTile)
+  -- If the piece is initialized, it is on the board and can move
+  if piece:initialized() then
+    local translation = TileTranslation.new(
+      Position.new(piece:getTileRow(), piece:getTileCol()),
+      Position.new(destTile:getRow(), destTile:getCol()),
+      self.rows, self.cols, piece:getTile(), destTile
+    )
+    return piece:validateMove(translation)
+  -- If the piece is uninitialized, it is not on the board and can only be placed
+  else
+    -- If the destination tile is occupied, the move is not valid
+    if destTile:hasPiece() then
+      return false
+    end
+
+    local translation = TileTranslation.new(
+      Position.new(-1, -1),
+      Position.new(destTile:getRow(), destTile:getCol()),
+      self.rows, self.cols, nil, destTile
+    )
+    return piece:validatePlacement(translation)
+  end
+end
+
+function Board:updateTileValidShading()
+  -- Shade all tiles based on valid moves
+  for i = 1, self.rows do
+    for j = 1, self.cols do
+      local tile = self.gridTiles[i][j]
+      if self:isValidMove(self.draggingPiece, tile) then
+        tile:setIsInvalid(false)  -- No shading for valid moves
+      else
+        tile:setIsInvalid(true)   -- Shade invalid moves
+      end
+    end
+  end
+end 
+
+function Board:clearTileShading()
+  for i = 1, self.rows do
+    for j = 1, self.cols do
+      self.gridTiles[i][j]:setIsInvalid(false)
+    end
+  end
 end
 
 function Board:movePiece(piece, destTile)
   -- Set piece position to new tile position and zero out velocity
   piece:getPosition():copy(destTile:calculatePiecePosition())
   piece:getOriginalPosition():copy(piece:getPosition())
-  piece:setDragging(false)
-  piece:getDragVelocity():zero()
 
   -- Remove piece from current tile
   if piece:getTile() then
@@ -273,4 +313,5 @@ function Board:movePiece(piece, destTile)
   end
   -- Set piece to new tile
   destTile:setPiece(piece)
+  piece:setTile(destTile)
 end

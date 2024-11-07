@@ -16,8 +16,8 @@ function GameManager:new()
   instance.gameState = "init"
   instance.board = Board:new()
   instance.players = {
-    BOTTOM = Player:new(ReturnPlayerConfigFile("player_white")),
-    TOP = Player:new(ReturnPlayerConfigFile("pc_lvl1"))
+    BOTTOM = Player:new(ReturnPlayerConfigFile("player_white"), BOTTOM),
+    TOP = Player:new(ReturnPlayerConfigFile("pc_lvl1"), TOP)
   }
 
   return instance
