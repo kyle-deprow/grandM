@@ -31,21 +31,17 @@ function GameManager:startGame()
 end
 
 function GameManager:update(dt)
-  -- Update game logic
   if self.gameState == "playing" then
-    -- Handle game updates
+    self.board:update(dt)
   end
 end
 
 function GameManager:draw()
-  -- Draw the board and pieces
   self.board:draw()
 end
 
 function GameManager:keypressed(key)
-  -- Handle key input
   if key == "space" then
-    -- Example: switch turns
     self:switchTurn()
   end
 end
@@ -54,3 +50,25 @@ function GameManager:switchTurn()
   self.currentPlayer = self.players[self.inactivePlayer]
   self.inactivePlayer = self.players[self.currentPlayer]
 end
+
+function GameManager:mousepressed(x, y, button)
+  -- If the game is in playing state, pass the mouse press to the board
+  if self.gameState == "playing" then
+    self.board:mousepressed(x, y, button)
+  end
+end
+
+function GameManager:mousemoved(x, y)
+  -- If the game is in playing state, pass the mouse move to the board
+  if self.gameState == "playing" then
+    self.board:mousemoved(x, y)
+  end
+end
+
+function GameManager:mousereleased(x, y, button)
+  -- If the game is in playing state, pass the mouse release to the board
+  if self.gameState == "playing" then
+    self.board:mousereleased(x, y, button)
+  end
+end
+

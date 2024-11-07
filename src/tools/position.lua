@@ -45,7 +45,7 @@ function Position:setY(y)
 end
 
 -- Set both x and y at once
-function Position:set(x, y)
+function Position:setXY(x, y)
   self.x = x
   self.y = y
 end
@@ -58,6 +58,16 @@ end
 -- Alternative name if you prefer this syntax
 function Position:isDefault()
   return self:isUninitialized()
+end
+
+function Position:add(pos)
+  self.x = self.x + pos.x
+  self.y = self.y + pos.y
+end 
+
+function Position:subtract(pos)
+  self.x = self.x - pos.x
+  self.y = self.y - pos.y
 end
 
 return Position

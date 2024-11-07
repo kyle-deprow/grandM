@@ -31,7 +31,6 @@ function Board:initialize(rows, cols, player1, player2)
   self.cols = cols
   self.gridTiles = {}
   self.players = {BOTTOM = player1, TOP = player2}
-  DebugPrint("BOARD", "Initializing board", self.players.BOTTOM:getColor(), self.players.TOP:getColor())
   self.tileHolders = {BOTTOM = {}, TOP = {}}
 
   self:initializeBoard()
@@ -86,10 +85,8 @@ end
 function Board:initializePieces()
   -- Position all non-interactive players' pieces below the board
   for position, player in pairs(self.players) do
-    DebugPrint("BOARD", "Initializing pieces for player", position, player:getColor(), "length", #player:getPieces())
     for _, piece in ipairs(player:getPieces()) do
       piece:calculateScale(self.tileSize)
-      DebugPrint("BOARD", "Initializing piece", piece:getId(), "position", piece.position, "scale", piece.scale, "tileSize", self.tileSize)
       if player:getIsInteractive() then
         self:initializeTileHolderPiece(piece, position)
       elseif not player:getIsInteractive() and piece.position:isDefault() then
@@ -105,13 +102,13 @@ end
 
 function Board:initializeBoardPiece(piece, position)
   -- Piece starts indicates how far from the center column and top/bottom of the board the piece is
-  DebugPrint("BOARD", "Initializing board piece", piece:getId(), "for player", position)
   local pieceStart = piece:getStart()
   local pieceColIndex = (math.floor(self.cols/2)) + pieceStart.offsetX
   local pieceRowIndex = (position == "TOP") and pieceStart.offsetY or (self.rows - pieceStart.offsetY)
   local tile = self.gridTiles[pieceRowIndex + 1][pieceColIndex + 1]
   piece:getPosition():copy(tile:calculatePiecePosition())
   piece:getOriginalPosition():copy(piece:getPosition())
+  piece:getDragVelocity():zero()
   tile:setPiece(piece)
 end
 
@@ -123,6 +120,9 @@ function Board:draw()
   end
   self:drawBoard()
   self:drawTileHolders()
+  -- Draw static pieces first so they are behind the dragging pieces
+  self:drawStaticPieces()
+  self:drawDraggingPieces()
 end
 
 function Board:checkIfWindowSizeChanged()
@@ -163,14 +163,33 @@ function Board:drawTileHolders()
   end
 end
 
+function Board:drawStaticPieces()
+  for position, player in pairs(self.players) do
+    for _, piece in ipairs(player:getPieces()) do
+      if not piece:getDragging() then
+        piece:draw()
+      end
+    end
+  end
+end
+
+function Board:drawDraggingPieces()
+  for position, player in pairs(self.players) do
+    for _, piece in ipairs(player:getPieces()) do
+      if piece:getDragging() then
+        piece:draw()
+      end
+    end
+  end
+end
+
 function Board:update(dt)
   -- Update logic for dragging and dropping pieces
-  for _, player in ipairs(self.players) do
-    if player.isInteractive then
+  for position, player in pairs(self.players) do
+    if player:getIsInteractive() then
       for _, piece in ipairs(player:getPieces()) do
-        if piece.isDragging then
-          local mousePosition = love.mouse.getPosition()
-          piece:getPosition():set(mousePosition.x, mousePosition.y)
+        if piece:getDragging() then
+          piece:updateDragging(Position.new(love.mouse.getPosition()), dt)
         end
       end
     end
@@ -178,12 +197,12 @@ function Board:update(dt)
 end
 
 function Board:mousepressed(x, y, button)
-  if button == 1 then -- Left mouse button
-    for _, player in ipairs(self.players) do
-      if player.isInteractive then
+  if button == LEFT_CLICK then
+    for position, player in pairs(self.players) do
+      if player:getIsInteractive() then
         for _, piece in ipairs(player:getPieces()) do
-          if self.isMouseOverPiece(piece, x, y) then
-            piece.isDragging = true
+          if self:isMouseOverPiece(piece, x, y) then
+            piece:setDragging(true)
             break
           end
         end
@@ -193,16 +212,15 @@ function Board:mousepressed(x, y, button)
 end
 
 function Board:mousereleased(x, y, button)
-  if button == 1 then -- Left mouse button
-    for _, player in ipairs(self.players) do
-      if player.isInteractive then
+  if button == LEFT_CLICK then
+    for position, player in pairs(self.players) do
+      if player:getIsInteractive() then
         for _, piece in ipairs(player:getPieces()) do
-          if piece.isDragging then
-            piece.isDragging = false
+          if piece:getDragging() then
             -- Check if the piece is dropped on a valid board position
             local boardX, boardY = self:getBoardPosition(x, y)
-            if boardX > 0 and boardX <= #self.grid and boardY > 0 and boardY <= #self.grid[1] then
-              local tile = self.grid[boardY][boardX]
+            if boardX > 0 and boardX <= #self.gridTiles and boardY > 0 and boardY <= #self.gridTiles[1] then
+              local tile = self.gridTiles[boardY][boardX]
               if self:isValidMove(piece, tile) then
                 self:movePiece(piece, tile)
               else
@@ -216,6 +234,11 @@ function Board:mousereleased(x, y, button)
       end
     end
   end
+end
+
+function Board:mousemoved(x, y)
+  -- Update the mouse position
+  --self.mouseX, self.mouseY = x, y
 end
 
 function Board:isMouseOverPiece(piece, x, y)
@@ -238,7 +261,12 @@ function Board:isValidMove(piece, x, y)
 end
 
 function Board:movePiece(piece, destTile)
-  piece:getPosition():set(destTile:calculatePiecePosition())
+  -- Set piece position to new tile position and zero out velocity
+  piece:getPosition():copy(destTile:calculatePiecePosition())
+  piece:getOriginalPosition():copy(piece:getPosition())
+  piece:setDragging(false)
+  piece:getDragVelocity():zero()
+
   -- Remove piece from current tile
   if piece:getTile() then
     piece:getTile():setPiece(nil)

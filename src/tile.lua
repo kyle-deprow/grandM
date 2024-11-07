@@ -21,14 +21,11 @@ end
 function Tile:draw()
   love.graphics.setColor(self.color)
   love.graphics.rectangle("fill", self.leftTopCorner.x, self.leftTopCorner.y, self.tileSize, self.tileSize)
-  if self:hasPiece() then
-    self.piece:draw()
-  end
 end
 
 function Tile:reset(tileSize, topLeftCornerX, topLeftCornerY)
   self.tileSize = tileSize
-  self.leftTopCorner:set(topLeftCornerX, topLeftCornerY)
+  self.leftTopCorner:setXY(topLeftCornerX, topLeftCornerY)
   if self:hasPiece() then
     self.piece:reset(self:calculatePiecePosition())
     self.piece:calculateScale(self.tileSize)

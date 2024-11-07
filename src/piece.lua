@@ -1,6 +1,7 @@
 -- piece.lua
 require("engine/sprite")
 require("tools/position")
+require("tools/velocity")
 
 -- Base Piece class
 Piece = Sprite:extend()
@@ -25,6 +26,11 @@ function Piece:new(pieceConfig)
 	instance.pngSize = 150 -- TODO: Hardcoded for now
   instance.preScaler = 1/(instance.pngSize/(0.96)) --scale *0.96
   instance.scale = 0
+
+  instance.dragging = false
+  instance.dragVelocity = Velocity.new(0, 0)
+  instance.width = 0
+  instance.height = 0
 
   return instance
 end
@@ -56,9 +62,24 @@ function Piece:draw()
   -- love.graphics.setShader()
 end
 
+function Piece:updateDragging(target, dt)
+  -- Calculate offset from center of piece
+  target:subtract(Position.new(self.width/2, self.height/2))
+  -- Calculate difference between current and target position
+  target:subtract(self.position)
+
+  -- Update velocities
+  self.dragVelocity:multiply(DRAG_DAMPING)
+  self.dragVelocity:add(Velocity.new(target.x*DRAG_ACCELERATION*dt, target.y*DRAG_ACCELERATION*dt))
+
+  -- Apply velocities
+  self.position:add(Position.new(self.dragVelocity.x*dt, self.dragVelocity.y*dt))
+end
+
 function Piece:calculateScale(tileSize)
   self.scale = self.preScaler * tileSize
-  DebugPrint("PIECE", "Calculating scale for piece", self:getId(), "tileSize", tileSize, "preScaler", self.preScaler, "scale", self.scale)
+  self.width = self.scale * self.pngSize
+  self.height = self.scale * self.pngSize
 end 
 
 function Piece:reset(position)
@@ -80,6 +101,10 @@ end
 
 function Piece:setTile(tile)
   self.tile = tile
+end
+
+function Piece:setDragging(dragging)
+  self.dragging = dragging
 end
 
 function Piece:getId()
@@ -120,5 +145,21 @@ end
 
 function Piece:getTile()
   return self.tile
+end
+
+function Piece:getWidth()
+  return self.width
+end
+
+function Piece:getHeight()
+  return self.height
+end
+
+function Piece:getDragging()
+  return self.dragging
+end
+
+function Piece:getDragVelocity()
+  return self.dragVelocity
 end
 
