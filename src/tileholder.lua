@@ -76,19 +76,6 @@ function TileHolder:addPiece(piece)
   return false
 end
 
--- Remove a piece from a specific tile
--- @param piece: the piece to remove
--- @return boolean: true if piece was removed, false if piece not found
-function TileHolder:removePiece(piece)
-  for _, tile in ipairs(self.tiles) do
-    if tile:getPiece() == piece then
-      tile:setPiece(nil)
-      return true
-    end
-  end
-  return false
-end
-
 -- Get piece at specific position
 -- @param x,y: screen coordinates
 -- @return piece: the piece at the position, or nil if no piece
@@ -106,7 +93,6 @@ function TileHolder:getPieceAtPosition(x, y)
   return nil
 end
 
--- Draw the tile holder and its pieces
 function TileHolder:draw()
   for _, tile in ipairs(self.tiles) do
     tile:draw()
@@ -119,7 +105,6 @@ function TileHolder:draw()
   end
 end
 
--- Get all pieces currently in the holder
 function TileHolder:getPieces()
   local pieces = {}
   for _, tile in ipairs(self.tiles) do
@@ -128,6 +113,15 @@ function TileHolder:getPieces()
     end
   end
   return pieces
+end
+
+function TileHolder:isEmpty()
+  for _, tile in ipairs(self.tiles) do
+    if tile:hasPiece() then
+      return false
+    end
+  end
+  return true
 end
 
 return TileHolder

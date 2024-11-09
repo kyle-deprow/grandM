@@ -43,6 +43,15 @@ BOTTOM = -1
 DRAG_DAMPING = 0.50
 DRAG_ACCELERATION = 300
 
+VALID_GAME_STATES = {
+  START_SCREEN = "start_screen",
+  INITIALIZE = "initialize",
+  IN_PROGRESS = "in_progress",
+  CHECK = "check",
+  CHECKMATE = "checkmate",
+  STALEMATE = "stalemate"
+}
+
 -- Debug configurations
 DEBUG = {
     ENABLED = true,  -- Master switch

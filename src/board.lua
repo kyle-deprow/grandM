@@ -6,7 +6,7 @@ require("tile")
 Board = {}
 Board.__index = Board
 
-function Board:new()
+function Board:new(gameManager)
   local instance = setmetatable({}, Board)
   -- Initialize board attributes
   instance.gridTiles = {}
@@ -22,6 +22,8 @@ function Board:new()
   instance.windowHeight = 0
   instance.totalBoardWidth = 0
   instance.totalBoardHeight = 0
+  instance.gameManager = gameManager
+  instance.eventBus = gameManager:getEventBus()
   return instance
 end
 
@@ -230,6 +232,13 @@ function Board:mousereleased(x, y, button)
       end
       self.draggingPiece = nil
       self:clearTileShading()
+
+      if self:getGameState() == VALID_GAME_STATES.INITIALIZE then
+        -- Check if tileholder is empty and switch to in progress if so
+        if self.tileHolders.BOTTOM:isEmpty() and self.tileHolders.TOP:isEmpty() then
+          self.eventBus:publish("GAME_STATE_CHANGE", GameStateChange.new({newState = VALID_GAME_STATES.IN_PROGRESS, triggeredBy = "BOARD"}))
+        end
+      end
     end
   end
 end
@@ -263,14 +272,14 @@ end
 
 function Board:isValidMove(piece, destTile)
   -- If the piece is initialized, it is on the board and can move
-  if piece:initialized() then
+  if self:getGameState() == VALID_GAME_STATES.INITIALIZE then
     local translation = TileTranslation.new(
       Position.new(piece:getTileRow(), piece:getTileCol()),
       Position.new(destTile:getRow(), destTile:getCol()),
       self.rows, self.cols, piece:getTile(), destTile
     )
     return piece:validateMove(translation)
-  -- If the piece is uninitialized, it is not on the board and can only be placed
+  -- If game is in progress, pieces are on the board and can move
   else
     -- If the destination tile is occupied, the placement is not valid
     if destTile:hasPiece() then
@@ -320,4 +329,12 @@ function Board:movePiece(piece, destTile)
   -- Set piece to new tile
   destTile:setPiece(piece)
   piece:setTile(destTile)
+end
+
+function Board:getGameManager()
+  return self.gameManager
+end
+
+function Board:getGameState()
+  return self.gameManager:getGameState()
 end
