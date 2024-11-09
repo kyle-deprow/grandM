@@ -11,14 +11,14 @@
       "items": []
     },
     {
-      "type": "pawn",
+      "type": "knight",
       "rank": 1,
       "health": 1,
       "defense": 0,
       "items": []
     },
     {
-      "type": "pawn",
+      "type": "bishop",
       "rank": 1,
       "health": 1,
       "defense": 0,

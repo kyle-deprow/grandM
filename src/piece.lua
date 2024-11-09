@@ -32,6 +32,7 @@ function Piece:new(pieceConfig)
   instance.dragVelocity = Velocity.new(0, 0)
   instance.width = 0
   instance.height = 0
+  instance.board = nil
 
   return instance
 end
@@ -95,15 +96,39 @@ function Piece:validateMove(translation)
   end
 end
 
+function Piece:checkFriendlyOccupiedMove(translation)
+  -- Default implementation: return false if destination tile has a piece of the same player
+  -- Subclasses can override this method if they have different rules
+  if translation:getDestinationTile():getPiece():getPlayerTopBottom() == self:getPlayerTopBottom() then
+    return false
+  end
+  return true
+end
+
 function Piece:validateOccupiedMove(translation)
+  if not self:checkFriendlyOccupiedMove(translation) then
+    return false
+  end
+  return self:_validateOccupiedMove(translation)
+end
+
+function Piece:_validateOccupiedMove(translation)
   -- Abstract method to be implemented by subclasses
 end
 
 function Piece:validateUnoccupiedMove(translation)
+  return self:_validateUnoccupiedMove(translation)
+end
+
+function Piece:_validateUnoccupiedMove(translation)
   -- Abstract method to be implemented by subclasses
 end
 
 function Piece:validatePlacement(translation)
+  return self:_validatePlacement(translation)
+end
+
+function Piece:_validatePlacement(translation)
   -- Abstract method to be implemented by subclasses
 end
 
@@ -116,88 +141,31 @@ function Piece:resetToOriginalPosition()
   self.position:copy(self.originalPosition)
 end 
 
-function Piece:setPosition(position)
-  self.position:copy(position)
-end
-
-function Piece:setOriginalPosition(position)
-  self.originalPosition:copy(position)
-end
-
-function Piece:setTile(tile)
-  self.tile = tile
-end
-
+function Piece:setBoard(board) self.board = board end
+function Piece:setPosition(position) self.position:copy(position) end
+function Piece:setOriginalPosition(position) self.originalPosition:copy(position) end
+function Piece:setTile(tile) self.tile = tile end
 function Piece:setDragging(dragging)
   self.dragging = dragging
   self.dragVelocity:zero()
 end
 
-function Piece:getId()
-  return self.id
-end
-
-function Piece:getOriginalPosition()
-  return self.originalPosition
-end
-
-function Piece:getType()
-  return self.type
-end
-
-function Piece:getColor()
-  return self.color
-end
-
-function Piece:getPosition()
-  return self.position
-end
-
-function Piece:getPngSize()
-  return self.pngSize
-end
-
-function Piece:getScale()
-  return self.scale
-end
-
-function Piece:getTexture()
-  return self.texture
-end
-
-function Piece:getStart()
-  return self.start
-end
-
-function Piece:getTile()
-  return self.tile
-end
-
-function Piece:getTileRow()
-  return self.tile:getRow()
-end
-
-function Piece:getTileCol()
-  return self.tile:getCol()
-end
-
-function Piece:getWidth()
-  return self.width
-end
-
-function Piece:getHeight()
-  return self.height
-end
-
-function Piece:getDragging()
-  return self.dragging
-end
-
-function Piece:getDragVelocity()
-  return self.dragVelocity
-end
-
-function Piece:getPlayerTopBottom()
-  return self.playerTopBottom
-end
+function Piece:getId() return self.id end
+function Piece:getOriginalPosition() return self.originalPosition end
+function Piece:getBoard() return self.board end
+function Piece:getType() return self.type end
+function Piece:getColor() return self.color end
+function Piece:getPosition() return self.position end
+function Piece:getPngSize() return self.pngSize end
+function Piece:getScale() return self.scale end
+function Piece:getTexture() return self.texture end
+function Piece:getStart() return self.start end
+function Piece:getTile() return self.tile end
+function Piece:getTileRow() return self.tile:getRow() end
+function Piece:getTileCol() return self.tile:getCol() end
+function Piece:getWidth() return self.width end
+function Piece:getHeight() return self.height end
+function Piece:getDragging() return self.dragging end
+function Piece:getDragVelocity() return self.dragVelocity end
+function Piece:getPlayerTopBottom() return self.playerTopBottom end
 

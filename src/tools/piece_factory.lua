@@ -1,7 +1,11 @@
 require("pieces.pawn")
+require("pieces.knight")
+require("pieces.bishop")
 
 local pieceClasses = {
-  pawn = Pawn
+  pawn = Pawn,
+  knight = Knight,
+  bishop = Bishop
 }
 
 -- Factory function to create a piece from JSON config object

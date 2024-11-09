@@ -15,23 +15,21 @@ function Pawn:init(...)
   Piece.init(self, ...)
 end
 
-function Pawn:validateUnoccupiedMove(translation)
+function Pawn:_validateUnoccupiedMove(translation)
   -- 1. Destination tile is forward one tile and empty
   -- 2. Destination tile is forward two tiles and empty, along with pawn is at starting position
-  DebugPrint("PIECE", "Validating unoccupied move", translation)
   return (translation:getDifferenceRow() == -1 and translation:getDifferenceCol() == 0) or
          (translation:getDifferenceRow() == -2 and translation:getDifferenceCol() == 0 and
-          translation:getCurrentTile():getRow() == translation:getBoardRows() - 1)
+          translation:getSourceTile():getRow() == translation:getBoardRows() - 1)
 end
 
-function Pawn:validateOccupiedMove(translation)
+function Pawn:_validateOccupiedMove(translation)
   -- Pawn occupied destination is valid if:
   -- 1. Destination tile is diagonal and occupied by an enemy piece
-  DebugPrint("PIECE", "Validating occupied move", translation)
   return (translation:getDifferenceRow() == -1 and math.abs(translation:getDifferenceCol()) == 1)
 end
 
-function Pawn:validatePlacement(translation)
+function Pawn:_validatePlacement(translation)
   if translation:getDestinationTile():getRow() == translation:getBoardRows() - 1 then
     return true
   end

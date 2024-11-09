@@ -87,6 +87,8 @@ function Board:initializePieces()
   for position, player in pairs(self.players) do
     for _, piece in ipairs(player:getPieces()) do
       piece:calculateScale(self.tileSize)
+      piece:getDragVelocity():zero()
+      piece:setBoard(self)
       if player:getIsInteractive() then
         self:initializeTileHolderPiece(piece, position)
       elseif not player:getIsInteractive() and piece.position:isDefault() then
@@ -98,6 +100,7 @@ end
 
 function Board:initializeTileHolderPiece(piece, position)
   self.tileHolders[position]:addPiece(piece)
+  piece:setBoard(self)
 end
 
 function Board:initializeBoardPiece(piece, position)
@@ -108,7 +111,6 @@ function Board:initializeBoardPiece(piece, position)
   local tile = self.gridTiles[pieceRowIndex + 1][pieceColIndex + 1]
   piece:getPosition():copy(tile:calculatePiecePosition())
   piece:getOriginalPosition():copy(piece:getPosition())
-  piece:getDragVelocity():zero()
   tile:setPiece(piece)
 end
 
@@ -248,6 +250,10 @@ function Board:isMouseOverPiece(piece, x, y)
   return x >= pieceX and x <= pieceX + piece:getWidth() and y >= pieceY and y <= pieceY + piece:getHeight()
 end
 
+function Board:isTileOccupied(row, col)
+  return self.gridTiles[row][col]:hasPiece()
+end
+
 function Board:getBoardPosition(x, y)
   -- Convert screen coordinates to board coordinates
   local boardX = math.floor((x - self.offsetX) / self.tileSize) + 1
@@ -266,7 +272,7 @@ function Board:isValidMove(piece, destTile)
     return piece:validateMove(translation)
   -- If the piece is uninitialized, it is not on the board and can only be placed
   else
-    -- If the destination tile is occupied, the move is not valid
+    -- If the destination tile is occupied, the placement is not valid
     if destTile:hasPiece() then
       return false
     end
