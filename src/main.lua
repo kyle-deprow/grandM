@@ -8,7 +8,6 @@ require("globals")
 function love.load()
   love.graphics.setBackgroundColor(C.GRAY)
   manager = GameManager:new()
-  manager:startGame()
 end
 
 function love.update(dt)

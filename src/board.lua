@@ -1,6 +1,7 @@
 require("globals")
 require("tileholder")
 require("tile")
+require("tools/eventbus")
 
 -- Board class
 Board = {}
@@ -23,16 +24,16 @@ function Board:new(gameManager)
   instance.totalBoardWidth = 0
   instance.totalBoardHeight = 0
   instance.gameManager = gameManager
-  instance.eventBus = gameManager:getEventBus()
+  instance.eventBus = EventBus:getInstance()
   return instance
 end
 
-function Board:initialize(rows, cols, player1, player2)
+function Board:initialize(rows, cols, players)
   -- Set up initial board state
   self.rows = rows
   self.cols = cols
   self.gridTiles = {}
-  self.players = {BOTTOM = player1, TOP = player2}
+  self.players = players
   self.tileHolders = {BOTTOM = {}, TOP = {}}
 
   self:initializeBoard()
@@ -236,7 +237,7 @@ function Board:mousereleased(x, y, button)
       if self:getGameState() == VALID_GAME_STATES.INITIALIZE then
         -- Check if tileholder is empty and switch to in progress if so
         if self.tileHolders.BOTTOM:isEmpty() and self.tileHolders.TOP:isEmpty() then
-          self.eventBus:publish("GAME_STATE_CHANGE", GameStateChange.new({newState = VALID_GAME_STATES.IN_PROGRESS, triggeredBy = "BOARD"}))
+          self.eventBus:publish("GAME_STATE_CHANGE", GameStateChange:new({newState=VALID_GAME_STATES.IN_PROGRESS, triggeredBy=self}))
         end
       end
     end
@@ -271,26 +272,20 @@ function Board:getBoardPosition(x, y)
 end
 
 function Board:isValidMove(piece, destTile)
-  -- If the piece is initialized, it is on the board and can move
-  if self:getGameState() == VALID_GAME_STATES.INITIALIZE then
-    local translation = TileTranslation.new(
-      Position.new(piece:getTileRow(), piece:getTileCol()),
-      Position.new(destTile:getRow(), destTile:getCol()),
-      self.rows, self.cols, piece:getTile(), destTile
-    )
+  local translation = TileTranslation.new(
+    Position.new(piece:getTileRow(), piece:getTileCol()),
+    Position.new(destTile:getRow(), destTile:getCol()),
+    self.rows, self.cols, piece:getTile(), destTile
+  )
+  -- If the piece is in-progress, it is on the board and can move
+  if self:getGameState() == VALID_GAME_STATES.IN_PROGRESS then
     return piece:validateMove(translation)
-  -- If game is in progress, pieces are on the board and can move
-  else
+  -- If game is in initialize, pieces are not on the board and need to be placed
+  elseif self:getGameState() == VALID_GAME_STATES.INITIALIZE then
     -- If the destination tile is occupied, the placement is not valid
     if destTile:hasPiece() then
       return false
     end
-
-    local translation = TileTranslation.new(
-      Position.new(-1, -1),
-      Position.new(destTile:getRow(), destTile:getCol()),
-      self.rows, self.cols, nil, destTile
-    )
     return piece:validatePlacement(translation)
   end
 end

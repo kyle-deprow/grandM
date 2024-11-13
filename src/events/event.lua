@@ -1,10 +1,12 @@
 Event = {}
 Event.__index = Event
+Event.__class = "Event"
 
-function Event:new(eventType, timestamp)
+function Event:new(eventType, triggeredBy)
   local instance = setmetatable({}, self)
-  instance.eventType = eventType or "UNDEFINED"
-  instance.timestamp = timestamp or os.time()
+  instance.eventType = eventType or UNDEFINED
+  instance.triggeredBy = triggeredBy or UNDEFINED
+  instance.timestamp = os.time()
   return instance
 end
 
@@ -34,9 +36,9 @@ function Event:serialize()
   }
 end
 
--- Virtual method for validation
+-- Default method for validation
 function Event:isValid()
-  return self.eventType ~= nil and self.eventType ~= "UNDEFINED"
+  return self.eventType ~= nil and self.eventType ~= UNDEFINED
 end
 
 return Event

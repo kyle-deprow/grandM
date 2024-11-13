@@ -1,9 +1,19 @@
+require("tools/debug_utils")
+
 EventBus = {}
 EventBus.__index = EventBus
 
-function EventBus:new()
-  local instance = setmetatable({}, EventBus)
-  instance.subscribers = {}
+local instance = nil
+
+function EventBus.new()
+  error("EventBus is a singleton. Use EventBus:getInstance() instead.")
+end
+
+function EventBus:getInstance()
+  if not instance then
+    instance = setmetatable({}, EventBus)
+    instance.subscribers = {}
+  end
   return instance
 end
 
@@ -15,6 +25,7 @@ function EventBus:subscribe(eventName, callback)
 end
 
 function EventBus:publish(event)
+  DebugPrint("EVENTBUS", "Publishing event: " .. DebugUtils.tableToString(event))
   if not event:isValid() then
     DebugPrint("EVENTBUS", "Warning: Attempted to publish invalid event")
     return false

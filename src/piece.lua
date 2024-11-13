@@ -6,6 +6,7 @@ require("tools/tile_translation")
 
 -- Base Piece class
 Piece = Sprite:extend()
+Piece.__class = "Piece"
 
 function Piece:new(pieceConfig)
   local instance = setmetatable({}, self)
@@ -35,6 +36,18 @@ function Piece:new(pieceConfig)
   instance.board = nil
 
   return instance
+end
+
+Piece.__tostring = function(self)
+  return string.format("%s(type=%s, color=%s, pos=(%d,%d), player=%s, tile=%s)",
+    self.__class,
+    self.type,
+    self.color,
+    self.position.x,
+    self.position.y,
+    self.playerTopBottom,
+    self.tile and string.format("[%d,%d]", self.tile:getRow(), self.tile:getCol()) or "nil"
+  )
 end
 
 function Piece:init(...)
@@ -161,11 +174,12 @@ function Piece:getScale() return self.scale end
 function Piece:getTexture() return self.texture end
 function Piece:getStart() return self.start end
 function Piece:getTile() return self.tile end
-function Piece:getTileRow() return self.tile:getRow() end
-function Piece:getTileCol() return self.tile:getCol() end
+function Piece:getTileRow() return self.tile and self.tile:getRow() or -1 end
+function Piece:getTileCol() return self.tile and self.tile:getCol() or -1 end
 function Piece:getWidth() return self.width end
 function Piece:getHeight() return self.height end
 function Piece:getDragging() return self.dragging end
 function Piece:getDragVelocity() return self.dragVelocity end
 function Piece:getPlayerTopBottom() return self.playerTopBottom end
 
+return Piece

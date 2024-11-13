@@ -46,11 +46,24 @@ DRAG_ACCELERATION = 300
 VALID_GAME_STATES = {
   START_SCREEN = "start_screen",
   INITIALIZE = "initialize",
-  IN_PROGRESS = "in_progress",
-  CHECK = "check",
-  CHECKMATE = "checkmate",
-  STALEMATE = "stalemate"
+  IN_PROGRESS = "in_progress"
 }
+
+VALID_BOARD_STATES = {
+  UNDEFINED = "undefined",
+  INITIALIZED = "initialized",
+  PLAYER1_TURN = "player1_turn",
+  PLAYER2_TURN = "player2_turn",
+  FINISHED = "finished"
+}
+
+EVENTS = {
+  INITIALIZE_BOARD = "INITIALIZE_BOARD",
+  GAME_STATE_CHANGE = "GAME_STATE_CHANGE",
+  BOARD_STATE_CHANGE = "BOARD_STATE_CHANGE"
+}
+
+UNDEFINED = "UNDEFINED"
 
 -- Debug configurations
 DEBUG = {
@@ -63,6 +76,7 @@ DEBUG = {
         PLAYER = false,
         TILE = true,
         TILEHOLDER = false,
-        GAME = false
+        GAME = false,
+        EVENTBUS = true
     }
 }

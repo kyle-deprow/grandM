@@ -5,6 +5,7 @@ local TILE_CORRECTION = 0.025
 -- Tile class to represent a single tile on the board
 Tile = {}
 Tile.__index = Tile
+Tile.__class = "Tile"
 
 -- Constructor for new Tile
 -- @param color: initial color of the tile (string)
@@ -21,6 +22,18 @@ function Tile.new(color, row, col)
   -- Copy the color for invalid shade and change the alpha
   instance.invalidShade = {instance.color[1], instance.color[2], instance.color[3], INVALID_TILE_ALPHA}
   return instance
+end
+
+Tile.__tostring = function(self)
+  return string.format("%s(pos=[%d,%d], color={%.2f,%.2f,%.2f}, piece=%s)",
+    self.__class,
+    self.row,
+    self.col,
+    self.color[1],
+    self.color[2],
+    self.color[3],
+    self.piece and tostring(self.piece) or "nil"
+  )
 end
 
 function Tile:draw()

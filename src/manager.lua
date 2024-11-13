@@ -5,6 +5,7 @@ require("player")
 require("tools/util")
 require("tools/eventbus")
 require("events/gamestatechange")
+require("events/initializeboard")
 --require("events/piecechange")
 
 GameManager = {}
@@ -18,57 +19,28 @@ function GameManager:new()
   instance.inactivePlayer = nil
 
   instance.gameState = VALID_GAME_STATES.START_SCREEN
+  instance.boardState = VALID_BOARD_STATES.UNDEFINED
 
-  instance.eventBus = EventBus:new()
+  instance.eventBus = EventBus:getInstance()
   instance:registerEventHandlers()
 
   -- TODO: Immediately initialize the game
-  instance:handleGameStateChange(GameStateChange.new({newState = VALID_GAME_STATES.INITIALIZE,
-                                                      player = {TOP = "pc_lvl1", BOTTOM = "player_white"}}))
+  local initializeBoardEvent = InitializeBoard:new({players = {TOP = "pc_lvl1", BOTTOM = "player_white"},
+                                                    boardConfig = {width = 8, height = 8},
+                                                    triggeredBy = self})
+  instance.eventBus:publish(initializeBoardEvent)
 
   return instance
 end
 
 function GameManager:registerEventHandlers()
   -- Register event handlers with callback functions
-  self.eventBus:subscribe("PIECE_ATTRIBUTE_CHANGE", function(pieceChange)
-    self:handlePieceAttributeChange(pieceChange)
+  self.eventBus:subscribe(EVENTS.INITIALIZE_BOARD, function(event)
+    self:handleInitializeBoard(event)
   end)
-
-  -- self.eventBus:subscribe("GAME_STATE_CHANGE", function(gameStateChange)
-  --   self:handleGameStateChange(gameStateChange)
-  -- end)
-end
-
--- function GameManager:handlePieceAttributeChange(pieceChange)
---   -- Handle piece attribute changes
---   if pieceChange.attributeName == "captured" and pieceChange.newValue == true then
---     -- Handle piece capture logic
---     self:checkGameEndCondition()
---   end
--- end
-
-function GameManager:handleGameStateChange(gameStateChange)
-  local handlerName = "handle" .. gameStateChange:getNewState():gsub("^%l", string.upper)
-  if self[handlerName] then
-    self[handlerName](self, gameStateChange)
-  else
-    DebugPrint("MANAGER", "No handler found for game state change: " .. gameStateChange.newState)
-  end
-end
-
-function GameManager:handleInitialize(gameStateChange)
-  if self:isStartScreen() then
-    self.gameState = VALID_GAME_STATES.INITIALIZE
-    self.board = Board:new(self)
-    self.players = {
-      BOTTOM = Player:new(ReturnPlayerConfigFile(gameStateChange.player.BOTTOM), BOTTOM),
-      TOP = Player:new(ReturnPlayerConfigFile(gameStateChange.player.TOP), TOP)
-    }
-    self.currentPlayer = self.players.BOTTOM
-    self.inactivePlayer = self.players.TOP
-    self.board:initialize(8, 8, self.currentPlayer, self.inactivePlayer)
-  end
+  self.eventBus:subscribe(EVENTS.GAME_STATE_CHANGE, function(event)
+    self:handleGameStateChange(event)
+  end)
 end
 
 function GameManager:update(dt)
@@ -124,6 +96,28 @@ function GameManager:isStartScreen()
   return self.gameState == VALID_GAME_STATES.START_SCREEN
 end
 
-function GameManager:getEventBus()
-  return self.eventBus
+-- Getters
+function GameManager:getGameState() return self.gameState end
+
+-- Handler definitions below
+function GameManager:handleInitializeBoard(event)
+  if self:isStartScreen() then
+    self.gameState = VALID_GAME_STATES.INITIALIZE
+    self.board = Board:new(self)
+    self.players = {
+      BOTTOM = Player:new(ReturnPlayerConfigFile(event.players.BOTTOM), BOTTOM),
+      TOP = Player:new(ReturnPlayerConfigFile(event.players.TOP), TOP)
+    }
+    self.currentPlayer = self.players.BOTTOM
+    self.inactivePlayer = self.players.TOP
+    self.board:initialize(event.boardConfig.width, event.boardConfig.height, self.players)
+  end
+end
+
+function GameManager:handleGameStateChange(event)
+  self.gameState = event.newState
+  if self.gameState == VALID_GAME_STATES.IN_PROGRESS then
+    self.eventBus:publish("GAME_STATE_CHANGE", GameStateChange:new({newState=VALID_GAME_STATES.IN_PROGRESS, triggeredBy=self}))
+    self.eventBus:publish("BOARD_STATE_CHANGE", BoardStateChange:new({newState=VALID_BOARD_STATES.INITIALIZED, triggeredBy=self}))
+  end
 end
